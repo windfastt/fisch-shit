@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulse 1000 — Precision Console Counter</title>
+  <style>
+    :root {
+      --bg-0: #07090e;
+      --bg-1: #0d111a;
+      --bg-card: rgba(17, 23, 36, 0.78);
+      --bg-terminal: #090c12;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(99, 179, 237, 0.28);
+      --text-primary: #f3f6fc;
+      --text-secondary: #94a3b8;
+      --text-muted: #59677d;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --mono: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-0);
+      background-image:
+        radial-gradient(circle at 18% 15%, rgba(56, 189, 248, 0.10), transparent 42%),
+        radial-gradient(circle at 82% 85%, rgba(129, 140, 248, 0.10), transparent 45%),
+        linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 980px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Top Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: rgba(52, 211, 153, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.28);
+      transition: all 0.25s ease;
+    }
+
+    .status-pill.paused {
+      background: rgba(251, 191, 36, 0.1);
+      color: var(--warning);
+      border-color: rgba(251, 191, 36, 0.28);
+    }
+
+    .status-pill.completed {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      animation: pulse 1s infinite ease-in-out;
+    }
+
+    .status-pill.paused .status-dot,
+    .status-pill.completed .status-dot {
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.75); opacity: 0.45; }
+    }
+
+    /* Main Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 840px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Radial Counter Dial */
+    .dial-wrap {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+    }
+
+    .dial-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .dial-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 10;
+    }
+
+    .dial-progress {
+      fill: none;
+      stroke: url(#dialGradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 691.15;
+      stroke-dashoffset: 691.15;
+      transition: stroke-dashoffset 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+    }
+
+    .dial-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      user-select: none;
+    }
+
+    .count-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .count-value {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 3.6rem;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: transform 0.15s ease;
+    }
+
+    .count-value.tick-pop {
+      transform: scale(1.035);
+    }
+
+    .count-target {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Progress Bar & Milestones */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .linear-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .linear-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .milestones {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .milestone.reached {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Stats Grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .stat-name {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-val {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button, select {
+      font-family: var(--sans);
+      font-size: 0.84rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover, select:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(129, 140, 248, 0.22));
+      border-color: rgba(56, 189, 248, 0.45);
+      color: #e0f2fe;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.32), rgba(129, 140, 248, 0.32));
+      border-color: var(--accent);
+    }
+
+    select {
+      background-color: #121826;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .toggle-label {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-label input {
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    /* Right Panel: Live Console Mirror */
+    .terminal-card {
+      padding: 0;
+      overflow: hidden;
+      background: var(--bg-terminal);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .dot.red { background: #ef4444; }
+    .dot.amber { background: #f59e0b; }
+    .dot.green { background: #10b981; }
+
+    .terminal-title {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clear-flash {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      opacity: 0.45;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .clear-flash.active {
+      opacity: 1;
+      transform: scale(1.04);
+    }
+
+    .terminal-body {
+      flex: 1;
+      padding: 22px;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.84rem;
+      line-height: 1.65;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 360px;
+    }
+
+    .console-frame {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .console-cmd {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+    }
+
+    .console-cmd span {
+      color: #c084fc;
+    }
+
+    .console-output-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .console-ascii-bar {
+      color: var(--success);
+      font-size: 0.8rem;
+      word-break: break-all;
+    }
+
+    .console-meta {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .code-snippet {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .code-snippet .kw { color: #c084fc; }
+    .code-snippet .fn { color: #38bdf8; }
+    .code-snippet .num { color: #fbbf24; }
+    .code-snippet .cm { color: var(--text-muted); }
+
+    .footer-hint {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">1K</div>
+        <div>
+          <h1 class="brand-title">Pulse 1000 — Console Counter</h1>
+          <p class="brand-subtitle">Clears and prints to the browser console every second up to 1,000</p>
+        </div>
+      </div>
+      <div id="statusPill" class="status-pill">
+        <span class="status-dot"></span>
+        <span id="statusText">Running · 1/sec</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- Left: Counter & Controls -->
+      <div class="card">
+        <div class="dial-wrap">
+          <svg class="dial-svg" viewBox="0 0 250 250" aria-hidden="true">
+            <defs>
+              <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#818cf8" />
+              </linearGradient>
+            </defs>
+            <circle class="dial-track" cx="125" cy="125" r="110" />
+            <circle id="dialProgress" class="dial-progress" cx="125" cy="125" r="110" />
+          </svg>
+          <div class="dial-center">
+            <span class="count-label">Current Count</span>
+            <div id="countDisplay" class="count-value" aria-live="polite">0</div>
+            <div class="count-target">/ 1,000</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-header">
+            <span id="percentText">0.0% Complete</span>
+            <span id="remainingCountText">1,000 ticks left</span>
+          </div>
+          <div class="linear-track">
+            <div id="linearFill" class="linear-fill"></div>
+          </div>
+          <div class="milestones">
+            <span class="milestone" data-m="0">0</span>
+            <span class="milestone" data-m="250">250</span>
+            <span class="milestone" data-m="500">500</span>
+            <span class="milestone" data-m="750">750</span>
+            <span class="milestone" data-m="1000">1,000</span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-name">Elapsed</div>
+            <div id="elapsedVal" class="stat-val">00:00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-name">Remaining</div>
+            <div id="etaVal" class="stat-val">16:40</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-name">Cadence</div>
+            <div id="cadenceVal" class="stat-val">1000 ms</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="toggleBtn" class="btn-primary" type="button">Pause</button>
+          <button id="resetBtn" type="button">Reset</button>
+          <button id="stepBtn" type="button" title="Increment by 1">+1</button>
+          <button id="nearEndBtn" type="button" title="Jump to 995 to preview completion">Jump 995</button>
+          <select id="speedSelect" aria-label="Counter speed">
+            <option value="1000" selected>1× (1 / sec)</option>
+            <option value="200">5× (5 / sec)</option>
+            <option value="100">10× (10 / sec)</option>
+            <option value="20">50× (50 / sec)</option>
+          </select>
+          <label class="toggle-label" title="Call console.clear() before each console.log()">
+            <input id="clearCheck" type="checkbox" checked />
+            <span>console.clear()</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Right: Live DevTools Console Mirror -->
+      <div class="card terminal-card">
+        <div class="terminal-bar">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot amber"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-title">DevTools Console Mirror</div>
+          <span id="clearBadge" class="clear-flash">console.clear()</span>
+        </div>
+
+        <div class="terminal-body">
+          <div class="console-frame">
+            <div id="consoleCmdLine" class="console-cmd">
+              &gt; <span>console</span>.clear(); <span>console</span>.log(<span id="cmdArg">0</span>);
+            </div>
+            <div id="consoleBigOut" class="console-output-number">0 / 1000</div>
+            <div id="consoleAsciiBar" class="console-ascii-bar">[░░░░░░░░░░░░░░░░░░░░░░░░░] 0.0%</div>
+            <div class="console-meta">
+              <span id="consoleTimestamp">Tick #0</span>
+              <span id="consoleStatusMsg">Waiting for first tick...</span>
+            </div>
+          </div>
+
+          <div class="code-snippet">
+            <div class="cm">// Active Console Loop</div>
+            <div><span class="kw">const</span> MAX = <span class="num">1000</span>;</div>
+            <div><span class="kw">let</span> count = <span class="num">0</span>;</div>
+            <div><span class="kw">const</span> timer = <span class="fn">setInterval</span>(() =&gt; {</div>
+            <div>&nbsp;&nbsp;count++;</div>
+            <div>&nbsp;&nbsp;<span class="fn">console.clear</span>();</div>
+            <div>&nbsp;&nbsp;<span class="fn">console.log</span>(count);</div>
+            <div>&nbsp;&nbsp;<span class="kw">if</span> (count &gt;= MAX) <span class="fn">clearInterval</span>(timer);</div>
+            <div>}, <span id="snippetMs" class="num">1000</span>);</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-hint">
+      Open Browser DevTools (<kbd>F12</kbd> or <kbd>Ctrl+Shift+I</kbd> / <kbd>Cmd+Option+I</kbd>) to watch the live console · Shortcuts: <kbd>Space</kbd> Pause/Resume, <kbd>R</kbd> Reset
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      const MAX_COUNT = 1000;
+      const CIRCUMFERENCE = 2 * Math.PI * 110; // r = 110 -> ~691.15
+
+      let count = 0;
+      let intervalMs = 1000;
+      let running = true;
+      let timerId = null;
+
+      // DOM elements
+      const countDisplay = document.getElementById('countDisplay');
+      const dialProgress = document.getElementById('dialProgress');
+      const linearFill = document.getElementById('linearFill');
+      const percentText = document.getElementById('percentText');
+      const remainingCountText = document.getElementById('remainingCountText');
+      const elapsedVal = document.getElementById('elapsedVal');
+      const etaVal = document.getElementById('etaVal');
+      const cadenceVal = document.getElementById('cadenceVal');
+      const statusPill = document.getElementById('statusPill');
+      const statusText = document.getElementById('statusText');
+      const toggleBtn = document.getElementById('toggleBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const stepBtn = document.getElementById('stepBtn');
+      const nearEndBtn = document.getElementById('nearEndBtn');
+      const speedSelect = document.getElementById('speedSelect');
+      const clearCheck = document.getElementById('clearCheck');
+      const clearBadge = document.getElementById('clearBadge');
+      const cmdArg = document.getElementById('cmdArg');
+      const consoleBigOut = document.getElementById('consoleBigOut');
+      const consoleAsciiBar = document.getElementById('consoleAsciiBar');
+      const consoleTimestamp = document.getElementById('consoleTimestamp');
+      const consoleStatusMsg = document.getElementById('consoleStatusMsg');
+      const snippetMs = document.getElementById('snippetMs');
+      const milestones = document.querySelectorAll('.milestone');
+
+      function formatTime(totalSeconds) {
+        const secs = Math.max(0, Math.ceil(totalSeconds));
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+
+      function buildAsciiBar(ratio, length = 25) {
+        const filled = Math.round(ratio * length);
+        return '[' + '█'.repeat(filled) + '░'.repeat(length - filled) + ']';
+      }
+
+      function logToBrowserConsole(current) {
+        const ratio = current / MAX_COUNT;
+        const pct = (ratio * 100).toFixed(1);
+        const bar = buildAsciiBar(ratio, 25);
+
+        if (clearCheck.checked) {
+          console.clear();
+          clearBadge.classList.add('active');
+          setTimeout(() => clearBadge.classList.remove('active'), Math.min(220, intervalMs * 0.6));
+        }
+
+        // Clean primary count output + styled progress line in DevTools console
+        console.log(
+          `%c${current}%c / ${MAX_COUNT}  %c${bar} ${pct}%`,
+          'color:#38bdf8;font-weight:700;font-size:16px;',
+          'color:#94a3b8;font-size:13px;',
+          'color:#34d399;font-family:monospace;font-size:12px;'
+        );
+
+        if (current >= MAX_COUNT) {
+          console.log(
+            '%cDone! Reached 1,000.',
+            'color:#34d399;font-weight:700;font-size:13px;'
+          );
+        }
+      }
+
+      function renderUI() {
+        const ratio = count / MAX_COUNT;
+        const pct = (ratio * 100).toFixed(1);
+        const remainingTicks = MAX_COUNT - count;
+        const elapsedSeconds = (count * intervalMs) / 1000;
+        const remainingSeconds = (remainingTicks * intervalMs) / 1000;
+
+        // Dial & numbers
+        countDisplay.textContent = count.toLocaleString();
+        countDisplay.classList.add('tick-pop');
+        setTimeout(() => countDisplay.classList.remove('tick-pop'), 130);
+
+        const offset = CIRCUMFERENCE * (1 - ratio);
+        dialProgress.style.strokeDashoffset = offset.toFixed(2);
+        linearFill.style.width = `${pct}%`;
+
+        percentText.textContent = `${pct}% Complete`;
+        remainingCountText.textContent = `${remainingTicks.toLocaleString()} ${remainingTicks === 1 ? 'tick' : 'ticks'} left`;
+
+        elapsedVal.textContent = formatTime(elapsedSeconds);
+        etaVal.textContent = formatTime(remainingSeconds);
+        cadenceVal.textContent = `${intervalMs} ms`;
+        snippetMs.textContent = String(intervalMs);
+
+        // Milestones
+        milestones.forEach((el) => {
+          const m = Number(el.dataset.m);
+          el.classList.toggle('reached', count >= m);
+        });
+
+        // Terminal mirror
+        cmdArg.textContent = String(count);
+        consoleBigOut.textContent = `${count} / ${MAX_COUNT}`;
+        consoleAsciiBar.textContent = `${buildAsciiBar(ratio, 25)} ${pct}%`;
+        consoleTimestamp.textContent = `Tick #${count}`;
+
+        if (count >= MAX_COUNT) {
+          consoleStatusMsg.textContent = 'Completed — reached 1,000!';
+          statusPill.className = 'status-pill completed';
+          statusText.textContent = 'Completed · 1,000';
+          toggleBtn.textContent = 'Restart';
+        } else if (running) {
+          consoleStatusMsg.textContent = `Clearing & printing every ${intervalMs}ms`;
+          statusPill.className = 'status-pill';
+          const rateLabel = intervalMs === 1000 ? '1/sec' : `${Math.round(1000 / intervalMs)}/sec`;
+          statusText.textContent = `Running · ${rateLabel}`;
+          toggleBtn.textContent = 'Pause';
+        } else {
+          consoleStatusMsg.textContent = 'Paused';
+          statusPill.className = 'status-pill paused';
+          statusText.textContent = 'Paused';
+          toggleBtn.textContent = 'Resume';
+        }
+      }
+
+      function tick() {
+        if (count >= MAX_COUNT) {
+          stopLoop();
+          return;
+        }
+        count += 1;
+        logToBrowserConsole(count);
+        renderUI();
+
+        if (count >= MAX_COUNT) {
+          stopLoop();
+        }
+      }
+
+      function startLoop() {
+        stopLoop();
+        running = true;
+        renderUI();
+        timerId = setInterval(tick, intervalMs);
+      }
+
+      function stopLoop() {
+        if (timerId !== null) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+        running = false;
+        renderUI();
+      }
+
+      function resetCounter(autoStart = true) {
+        stopLoop();
+        count = 0;
+        if (clearCheck.checked) {
+          console.clear();
+        }
+        renderUI();
+        if (autoStart) {
+          startLoop();
+        }
+      }
+
+      // Event Listeners
+      toggleBtn.addEventListener('click', () => {
+        if (count >= MAX_COUNT) {
+          resetCounter(true);
+        } else if (running) {
+          stopLoop();
+        } else {
+          startLoop();
+        }
+      });
+
+      resetBtn.addEventListener('click', () => {
+        resetCounter(true);
+      });
+
+      stepBtn.addEventListener('click', () => {
+        if (count < MAX_COUNT) {
+          tick();
+        }
+      });
+
+      nearEndBtn.addEventListener('click', () => {
+        count = 995;
+        logToBrowserConsole(count);
+        renderUI();
+        if (!running) {
+          startLoop();
+        }
+      });
+
+      speedSelect.addEventListener('change', (e) => {
+        intervalMs = Number(e.target.value);
+        if (running) {
+          startLoop();
+        } else {
+          renderUI();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          toggleBtn.click();
+        } else if (e.key === 'r' || e.key === 'R') {
+          resetCounter(true);
+        }
+      });
+
+      // Kick off immediately on load
+      startLoop();
+    })();
+  </script>
+</body>
+</html>
