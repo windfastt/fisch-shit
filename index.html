@@ -1091,10 +1091,10 @@
       // Calls the clean-realm native; if that throws (an engine that invalidates a removed
       // iframe's realm), falls back to this window's copy, but only if it is still native.
       // A clean copy that no longer reads as native loses to a native page copy.
-      function cleanCaller(clean, own, name) {
+      function cleanCaller(clean, own, name, label) {
         const cleanOk = typeof clean === 'function' && isNativeNamed(clean, name);
         const ownOk = typeof own === 'function' && own !== clean && isNativeNamed(own, name);
-        if (typeof clean === 'function' && !cleanOk && usingCleanRealm) vaultIssues.push(name);
+        if (typeof clean === 'function' && !cleanOk && usingCleanRealm) vaultIssues.push(label || name);
         let primary = null;
         let fallback = null;
         if (cleanOk) {
@@ -1126,7 +1126,7 @@
       }
 
       function getterCaller(ctorName, key) {
-        return cleanCaller(protoGetter(R, ctorName, key), protoGetter(window, ctorName, key), key);
+        return cleanCaller(protoGetter(R, ctorName, key), protoGetter(window, ctorName, key), key, `${ctorName}.${key}`);
       }
 
       // Every event field the shield looks at is read through a native getter, so an own
@@ -1182,7 +1182,8 @@
       const callPerfNow = cleanCaller(
         R.Performance && R.Performance.prototype.now,
         window.Performance && window.Performance.prototype.now,
-        'now'
+        'now',
+        'performance.now'
       );
       const perfNow = (() => {
         try {
@@ -1191,7 +1192,7 @@
         const own = R.performance;
         return () => callPerfNow(own);
       })();
-      const callDateNow = cleanCaller(R.Date.now, Date.now, 'now');
+      const callDateNow = cleanCaller(R.Date.now, Date.now, 'now', 'Date.now');
       const dateNow = () => callDateNow(null);
 
       const callSetTimeout = cleanCaller(R.setTimeout, window.setTimeout, 'setTimeout');
@@ -1213,7 +1214,7 @@
         window.PointerEvent && window.PointerEvent.prototype.getCoalescedEvents,
         'getCoalescedEvents'
       );
-      const callGetContext = cleanCaller(R.HTMLCanvasElement.prototype.getContext, HTMLCanvasElement.prototype.getContext, 'getContext');
+      const callGetContext = cleanCaller(R.HTMLCanvasElement.prototype.getContext, HTMLCanvasElement.prototype.getContext, 'getContext', 'canvas.getContext');
       const callWebdriver = getterCaller('Navigator', 'webdriver');
 
       // Ring geometry goes through clean canvas methods, so hooking
@@ -1248,7 +1249,8 @@
       const callRandom = cleanCaller(
         R.Crypto && R.Crypto.prototype.getRandomValues,
         window.Crypto && window.Crypto.prototype.getRandomValues,
-        'getRandomValues'
+        'getRandomValues',
+        'crypto.getRandomValues'
       );
 
       const mathRandom = R.Math.random;
@@ -1275,7 +1277,7 @@
 
       // Everything above stays usable once the frame is detached; detaching it means
       // window.frames no longer hands later page scripts a handle on this realm.
-      const callRemove = cleanCaller(R.Element.prototype.remove, Element.prototype.remove, 'remove');
+      const callRemove = cleanCaller(R.Element.prototype.remove, Element.prototype.remove, 'remove', 'Element.remove');
       if (cleanWindow && callRemove) {
         try {
           callRemove(cleanFrame);
