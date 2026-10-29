@@ -961,7 +961,7 @@
             <span id="chipTrusted" class="hid-chip" title="The event must come from the browser's own input pipeline (isTrusted, read through a clean native getter).">isTrusted</span>
             <span id="chipLive" class="hid-chip" title="The event must be inside its own dispatch and under 1 s old, which blocks DevTools getEventListeners() replays.">Live dispatch</span>
             <span id="chipPath" class="hid-chip" title="A mouse must travel to the target: no teleports, constant-step loops, ruler-straight constant-speed paths or robotic cadence.">Pointer path</span>
-            <span id="chipRing" class="hid-chip" title="Hold a ring drawn at a random spot on a canvas. A blind HID macro can't know where it is.">Ring hold</span>
+            <span id="chipRing" class="hid-chip" title="Hold a ring drawn at a random spot on a canvas. A blind HID macro can't know where it is, and hits faster than a person can react are rejected.">Ring hold</span>
             <span id="chipDom" class="hid-chip pass" title="Every counter readout is re-verified after each DOM mutation and restored if edited.">DOM guard</span>
             <span id="chipEnv" class="hid-chip pass" title="Clocks, timers and event getters come from a fresh iframe realm; page hooks and automation flags are reported.">Clean realm</span>
           </div>
@@ -1007,7 +1007,7 @@
             <div class="cm">// Every Pause / Reset has to clear all of these, in order</div>
             <div><span class="fn">trusted</span>(e) &amp;&amp; <span class="fn">liveDispatch</span>(e) &amp;&amp; <span class="fn">fresh</span>(e, <span class="num">1000</span>ms)</div>
             <div><span class="fn">pressLifecycle</span>(down → up → click) &amp;&amp; <span class="fn">humanPath</span>(trail)</div>
-            <div><span class="fn">holdRing</span>(randomSpot, <span class="num">320–540</span>ms) <span class="cm">// needs eyes, not a script</span></div>
+            <div><span class="fn">holdRing</span>(randomSpot, <span class="num">320–540</span>ms) <span class="cm">// blind macros miss it</span></div>
           </div>
         </div>
       </div>
@@ -1303,6 +1303,8 @@
       const RING_HOLD_MIN_MS = 320;
       const RING_HOLD_SPREAD_MS = 220;
       const RING_TIMEOUT_MS = 8000;
+      // Seeing the ring, reacting and travelling ≥140 px to it takes a person well over 250 ms.
+      const RING_REACTION_MS = 180;
       const RING_MIN_DISTANCE = 140;
       const RING_HEADER = 64;
       const LOCK_AFTER_FAILS = 3;
@@ -2328,7 +2330,10 @@
         const type = read(e, 'pointerType') || 'mouse';
         const p = ringPoint(e);
         const dist = hypot(p.x - c.x, p.y - c.y);
+        const sinceShown = perfNow() - c.startT;
         if (dist > c.r + RING_HIT_SLOP) {
+          // Too soon to have aimed: the second click of a double-click on the control.
+          if (sinceShown < RING_REACTION_MS) return;
           c.misses += 1;
           c.miss = { x: p.x, y: p.y, t: perfNow() };
           if (c.misses === 1 && dist <= RING_NEAR_MISS) {
@@ -2336,6 +2341,10 @@
             return;
           }
           failChallenge('RING_MISS', `pressed ${round(dist)} px from the ring${c.misses > 1 ? ` (${c.misses} tries)` : ''}`);
+          return;
+        }
+        if (sinceShown < RING_REACTION_MS) {
+          failChallenge('RING_TOO_FAST', `ring hit ${round(sinceShown)} ms after it appeared`);
           return;
         }
         let approach = null;
