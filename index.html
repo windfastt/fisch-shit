@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pulse 1000 — Hardened Precision Console Counter</title>
+  <title>Pulse 1000 — Console Counter with Input Shield</title>
   <style>
     :root {
       --bg-0: #07090e;
@@ -52,6 +52,7 @@
 
     .shell {
       width: 100%;
+      min-width: 0;
       max-width: 1040px;
       display: flex;
       flex-direction: column;
@@ -98,6 +99,7 @@
       letter-spacing: -0.01em;
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
@@ -156,12 +158,6 @@
       border-color: rgba(56, 189, 248, 0.35);
     }
 
-    .status-pill.alert {
-      background: rgba(248, 113, 113, 0.14);
-      color: var(--danger);
-      border-color: rgba(248, 113, 113, 0.4);
-    }
-
     .status-dot {
       width: 8px;
       height: 8px;
@@ -184,17 +180,19 @@
     /* Main Grid */
     .grid {
       display: grid;
-      grid-template-columns: 1.04fr 0.96fr;
+      grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
       gap: 20px;
     }
 
     @media (max-width: 860px) {
       .grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
     }
 
     .card {
+      position: relative;
+      min-width: 0;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
@@ -269,6 +267,7 @@
       letter-spacing: -0.04em;
       background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       transition: transform 0.15s ease;
     }
@@ -348,8 +347,16 @@
     }
 
     @media (max-width: 560px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
       .stats-row {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
@@ -374,12 +381,14 @@
       font-size: 0.94rem;
       font-weight: 600;
       color: var(--text-primary);
+      white-space: nowrap;
     }
 
     .stat-val.good { color: var(--success); }
+    .stat-val.warn { color: var(--warning); }
     .stat-val.bad { color: var(--danger); }
 
-    /* Biometric Controls Area */
+    /* Shielded Controls Area */
     .controls-zone {
       position: relative;
       background: rgba(0, 0, 0, 0.25);
@@ -395,17 +404,58 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
       font-family: var(--mono);
       font-size: 0.7rem;
       color: var(--text-secondary);
     }
+
+    .controls-hint {
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (pointer: coarse) {
+      .esc-hint {
+        display: none;
+      }
+    }
+
+    .telemetry {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.2s ease;
+    }
+
+    .telemetry::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 8px;
+      border-radius: 50%;
+      vertical-align: 1px;
+      background: currentColor;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    .telemetry.idle,
+    .telemetry.info { color: var(--text-secondary); }
+    .telemetry.ok { color: var(--success); }
+    .telemetry.warn { color: var(--warning); }
+    .telemetry.bad { color: var(--danger); }
 
     .controls-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     button {
@@ -419,16 +469,22 @@
       color: var(--text-primary);
       padding: 10px 16px;
       cursor: pointer;
-      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+      transition: background 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
       display: inline-flex;
       align-items: center;
       gap: 7px;
       overflow: hidden;
+      touch-action: manipulation;
     }
 
     button:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
     .btn-primary {
@@ -442,6 +498,11 @@
       border-color: var(--accent);
     }
 
+    .controls-zone.locked button {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .hold-fill {
       position: absolute;
       left: 0;
@@ -449,7 +510,7 @@
       height: 3px;
       width: 0%;
       background: var(--accent);
-      transition: width 0.05s linear;
+      transition: width 0.12s ease;
       pointer-events: none;
     }
 
@@ -473,19 +534,33 @@
     .hid-metrics-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 7px;
       padding-top: 6px;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       font-family: var(--mono);
-      font-size: 0.69rem;
+      font-size: 0.67rem;
       color: var(--text-muted);
     }
 
     .hid-chip {
-      padding: 2px 7px;
-      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+      cursor: help;
+      transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .hid-chip::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
     }
 
     .hid-chip.pass {
@@ -494,13 +569,45 @@
       background: rgba(52, 211, 153, 0.07);
     }
 
+    .hid-chip.warn {
+      color: var(--warning);
+      border-color: rgba(251, 191, 36, 0.3);
+      background: rgba(251, 191, 36, 0.08);
+    }
+
     .hid-chip.fail {
       color: var(--danger);
       border-color: rgba(248, 113, 113, 0.35);
       background: rgba(248, 113, 113, 0.1);
     }
 
-    /* Right Panel: Live Console Mirror & Security Feed */
+    /* Confirm ring overlay (drawn on canvas; its position never touches the DOM) */
+    .ring-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      z-index: 5;
+      border-radius: var(--radius-lg);
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    .ring-layer.active {
+      display: block;
+      animation: ring-in 0.18s ease-out;
+    }
+
+    @keyframes ring-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Right Panel: Live Console Mirror & Shield Log */
     .terminal-card {
       padding: 0;
       overflow: hidden;
@@ -535,12 +642,16 @@
     .dot.green { background: #10b981; }
 
     .terminal-title {
+      flex: 1;
+      min-width: 0;
+      padding: 0 12px;
       font-family: var(--mono);
       font-size: 0.75rem;
       color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .clear-flash {
@@ -558,6 +669,11 @@
     .clear-flash.active {
       opacity: 1;
       transform: scale(1.04);
+    }
+
+    .clear-flash.off {
+      opacity: 0.2;
+      text-decoration: line-through;
     }
 
     .terminal-body {
@@ -588,9 +704,9 @@
       font-size: 0.74rem;
     }
 
-    .console-cmd span {
-      color: #c084fc;
-    }
+    .console-cmd .obj { color: #c084fc; }
+    .console-cmd .arg { color: var(--warning); }
+    .is-hidden { display: none; }
 
     .console-output-number {
       font-size: 1.9rem;
@@ -613,7 +729,7 @@
       gap: 12px;
     }
 
-    /* Security Guard Log */
+    /* Shield Log */
     .security-panel {
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border);
@@ -628,26 +744,42 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
       font-size: 0.72rem;
       font-weight: 600;
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.06em;
+      white-space: nowrap;
     }
+
+    .env-text {
+      text-transform: none;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60%;
+    }
+
+    .env-text.ok { color: var(--success); }
+    .env-text.warn { color: var(--warning); }
+    .env-text.bad { color: var(--danger); }
 
     .audit-list {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 5px;
-      max-height: 135px;
+      height: 152px;
       overflow-y: auto;
       font-size: 0.72rem;
     }
 
     .audit-item {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: baseline;
       gap: 8px;
       padding: 4px 7px;
       border-radius: 5px;
@@ -655,14 +787,31 @@
       color: var(--text-secondary);
     }
 
-    .audit-item.ok {
+    .audit-item.pass {
       border-left: 2px solid var(--success);
     }
 
-    .audit-item.blocked {
+    .audit-item.block {
       border-left: 2px solid var(--danger);
       background: rgba(248, 113, 113, 0.08);
       color: #fca5a5;
+    }
+
+    .audit-item.info {
+      border-left: 2px solid var(--warning);
+    }
+
+    .audit-detail {
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.85;
+    }
+
+    .audit-count {
+      font-weight: 700;
+      color: var(--text-primary);
     }
 
     .code-snippet {
@@ -672,7 +821,8 @@
       padding: 12px 15px;
       font-size: 0.72rem;
       color: var(--text-secondary);
-      line-height: 1.5;
+      line-height: 1.6;
+      overflow-x: auto;
     }
 
     .code-snippet .kw { color: #c084fc; }
@@ -683,6 +833,7 @@
     .footer-hint {
       text-align: center;
       font-size: 0.76rem;
+      line-height: 1.7;
       color: var(--text-muted);
     }
 
@@ -695,6 +846,16 @@
       border: 1px solid var(--border);
       color: var(--text-secondary);
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -705,22 +866,22 @@
         <div>
           <h1 class="brand-title">
             Pulse 1000 — Console Counter
-            <span id="shieldBadge" class="shield-tag">Anti-Spoof &amp; Anti-HID Active</span>
+            <span class="shield-tag">Input Shield</span>
           </h1>
-          <p class="brand-subtitle">Hardware-clock anchored 1,000s console counter with Fake-HID &amp; synthetic click rejection</p>
+          <p class="brand-subtitle">Counts to 1,000 once per second · clears &amp; reprints the DevTools console every tick · shielded controls</p>
         </div>
       </div>
       <div class="topbar-right">
         <div id="statusPill" class="status-pill">
           <span class="status-dot"></span>
-          <span id="statusText">Running · 1/sec Locked</span>
+          <span id="statusText">Running · 1/sec</span>
         </div>
       </div>
     </header>
 
     <section class="grid">
-      <!-- Left: Counter & Hardened Controls -->
-      <div class="card">
+      <!-- Left: Counter & Shielded Controls -->
+      <div class="card" id="counterCard">
         <div class="dial-wrap">
           <svg class="dial-svg" viewBox="0 0 250 250" aria-hidden="true">
             <defs>
@@ -733,16 +894,16 @@
             <circle id="dialProgress" class="dial-progress" cx="125" cy="125" r="110" />
           </svg>
           <div class="dial-center">
-            <span class="count-label">Verified Count</span>
+            <span class="count-label">Count</span>
             <div id="countDisplay" class="count-value" aria-live="polite">0</div>
             <div class="count-target">/ 1,000</div>
-            <div id="chainSig" class="chain-sig">SIG: 0x811C9DC5</div>
+            <div id="chainSig" class="chain-sig" title="FNV-1a running checksum of this session's ticks. A tamper hint, not cryptography.">CHK 0x00000000</div>
           </div>
         </div>
 
         <div class="progress-section">
           <div class="progress-header">
-            <span id="percentText">0.0% Complete</span>
+            <span id="percentText">0.0% complete</span>
             <span id="remainingCountText">1,000 ticks left</span>
           </div>
           <div class="linear-track">
@@ -767,21 +928,21 @@
             <div id="etaVal" class="stat-val">16:40</div>
           </div>
           <div class="stat-box">
-            <div class="stat-name">Clock Drift</div>
-            <div id="driftVal" class="stat-val good">±0 ms</div>
+            <div class="stat-name">Timer Lag</div>
+            <div id="driftVal" class="stat-val good">+0 ms</div>
           </div>
           <div class="stat-box">
-            <div class="stat-name">Spoofs Blocked</div>
+            <div class="stat-name">Blocked</div>
             <div id="blockedVal" class="stat-val good">0</div>
           </div>
         </div>
 
-        <div class="controls-zone">
+        <div id="controlsZone" class="controls-zone">
           <div class="controls-header">
-            <span>Human-Verified Controls (Physical Pointer Trajectory + Hold Required)</span>
-            <span id="lastClickTelemetry">Awaiting physical input</span>
+            <span>Controls</span>
+            <span class="controls-hint">press, then hold the ring<span class="esc-hint"> · Esc cancels</span></span>
           </div>
-          <div id="controlsRow" class="controls-row">
+          <div class="controls-row">
             <button id="toggleBtn" class="btn-primary" type="button">
               <span id="toggleBtnLabel">Pause</span>
               <span class="hold-fill" id="toggleHoldFill"></span>
@@ -795,17 +956,21 @@
               <span>console.clear()</span>
             </label>
           </div>
+          <div id="shieldStatus" class="telemetry idle" role="status" aria-live="polite">Awaiting pointer input</div>
           <div class="hid-metrics-bar">
-            <span id="chipTrusted" class="hid-chip pass">isTrusted: Verified</span>
-            <span id="chipPath" class="hid-chip pass">Trajectory: Ready</span>
-            <span id="chipHold" class="hid-chip pass">Hold Bio: 22–650ms</span>
-            <span id="chipEntropy" class="hid-chip pass">Anti-Macro: Armed</span>
-            <span id="chipDom" class="hid-chip pass">DOM Guard: Locked</span>
+            <span id="chipTrusted" class="hid-chip" title="The event must come from the browser's own input pipeline (isTrusted, read through a clean native getter).">isTrusted</span>
+            <span id="chipLive" class="hid-chip" title="The event must be inside its own dispatch and under 1 s old, which blocks DevTools getEventListeners() replays.">Live dispatch</span>
+            <span id="chipPath" class="hid-chip" title="A mouse must travel to the target: no teleports, constant-step loops, ruler-straight constant-speed paths or robotic cadence.">Pointer path</span>
+            <span id="chipRing" class="hid-chip" title="Hold a ring drawn at a random spot on a canvas. A blind HID macro can't know where it is.">Ring hold</span>
+            <span id="chipDom" class="hid-chip pass" title="Every counter readout is re-verified after each DOM mutation and restored if edited.">DOM guard</span>
+            <span id="chipEnv" class="hid-chip pass" title="Clocks, timers and event getters come from a fresh iframe realm; page hooks and automation flags are reported.">Clean realm</span>
           </div>
         </div>
+
+        <canvas id="ringLayer" class="ring-layer" aria-hidden="true"></canvas>
       </div>
 
-      <!-- Right: Live DevTools Console Mirror & Security Audit Feed -->
+      <!-- Right: Live DevTools Console Mirror & Shield Log -->
       <div class="card terminal-card">
         <div class="terminal-bar">
           <div class="window-dots">
@@ -819,37 +984,38 @@
 
         <div class="terminal-body">
           <div class="console-frame">
-            <div id="consoleCmdLine" class="console-cmd">
-              &gt; <span>console</span>.clear(); <span>console</span>.log(<span id="cmdArg">0</span>);
+            <div class="console-cmd">
+              &gt; <span id="cmdClear"><span class="obj">console</span>.clear(); </span><span class="obj">console</span>.log(<span id="cmdArg" class="arg">0</span>);
             </div>
             <div id="consoleBigOut" class="console-output-number">0 / 1000</div>
             <div id="consoleAsciiBar" class="console-ascii-bar">[░░░░░░░░░░░░░░░░░░░░░░░░░] 0.0%</div>
             <div class="console-meta">
               <span id="consoleTimestamp">Tick #0</span>
-              <span id="consoleStatusMsg">Dual-clock monotonic lock active</span>
+              <span id="consoleStatusMsg">console.clear() + console.log() every second</span>
             </div>
           </div>
 
           <div class="security-panel">
             <div class="security-panel-header">
-              <span>Anti-Spoof &amp; Fake-HID Telemetry Log</span>
-              <span id="envIntegrityText" style="color: var(--success);">Native Prototypes Intact</span>
+              <span>Input Shield Log</span>
+              <span id="envIntegrityText" class="env-text ok">Clean realm · natives intact</span>
             </div>
             <ul id="auditList" class="audit-list"></ul>
           </div>
 
           <div class="code-snippet">
-            <div class="cm">// Monotonic Hardware-Clock &amp; Anti-HID Guard</div>
-            <div><span class="kw">if</span> (!<span class="fn">verifyPhysicalPointer</span>(evt)) <span class="kw">return</span> <span class="fn">blockFakeHID</span>(evt);</div>
-            <div><span class="kw">if</span> (monoNow() - lastTickMono &lt; <span class="num">960</span>) <span class="kw">return</span> <span class="fn">blockTimeSpoof</span>();</div>
-            <div><span class="fn">rawClear</span>(); <span class="fn">rawLog</span>(count, chainDigest);</div>
+            <div class="cm">// Every Pause / Reset has to clear all of these, in order</div>
+            <div><span class="fn">trusted</span>(e) &amp;&amp; <span class="fn">liveDispatch</span>(e) &amp;&amp; <span class="fn">fresh</span>(e, <span class="num">1000</span>ms)</div>
+            <div><span class="fn">pressLifecycle</span>(down → up → click) &amp;&amp; <span class="fn">humanPath</span>(trail)</div>
+            <div><span class="fn">holdRing</span>(randomSpot, <span class="num">320–540</span>ms) <span class="cm">// needs eyes, not a script</span></div>
           </div>
         </div>
       </div>
     </section>
 
     <footer class="footer-hint">
-      Open Browser DevTools (<kbd>F12</kbd> or <kbd>Ctrl+Shift+I</kbd> / <kbd>Cmd+Option+I</kbd>) · Synthetic <kbd>.click()</kbd>, <kbd>dispatchEvent</kbd>, linear HID mouse scripts, teleport clicks &amp; DOM edits are blocked
+      Open DevTools (<kbd>F12</kbd> · <kbd>Ctrl+Shift+I</kbd> · <kbd>Cmd+Option+I</kbd>) to watch the console clear and reprint every second.<br />
+      Pause and Reset take a real press, then a hold on a ring that appears at a random spot. Synthetic, replayed, teleporting and blind-macro input is rejected.
     </footer>
   </main>
 
@@ -858,865 +1024,1605 @@
       'use strict';
 
       // =========================================================================
-      // 1. NATIVE PRIMITIVE VAULT (Captured before any console/userscript hooks)
+      // 1. CLEAN-REALM NATIVE VAULT
       // =========================================================================
-      const rawSetTimeout = window.setTimeout.bind(window);
-      const rawClearTimeout = window.clearTimeout.bind(window);
-      const rawSetInterval = window.setInterval.bind(window);
-      const rawPerfNow = performance.now.bind(performance);
-      const rawDateNow = Date.now.bind(Date);
-      const rawConsoleClear = console.clear.bind(console);
-      const rawConsoleLog = console.log.bind(console);
-      const rawConsoleWarn = console.warn.bind(console);
-      const rawMathAbs = Math.abs;
-      const rawMathHypot = Math.hypot;
-      const rawMathAtan2 = Math.atan2;
-      const rawMathRound = Math.round;
-      const rawMathFloor = Math.floor;
-      const rawMathMax = Math.max;
-      const rawMathMin = Math.min;
-      const rawMathSqrt = Math.sqrt;
-      const rawGetRandomValues = crypto.getRandomValues.bind(crypto);
-      const fnToString = Function.prototype.toString;
-      const hasOwn = Object.prototype.hasOwnProperty;
-
-      const trustedDescriptor = Object.getOwnPropertyDescriptor(Event.prototype, 'isTrusted');
-      const rawIsTrustedGetter = trustedDescriptor && trustedDescriptor.get
-        ? trustedDescriptor.get
-        : null;
-
-      // Freeze event prototypes to prevent post-load getter redefinition
-      try {
-        Object.freeze(Event.prototype);
-        if (window.PointerEvent) Object.freeze(PointerEvent.prototype);
-        if (window.MouseEvent) Object.freeze(MouseEvent.prototype);
-      } catch (_) {}
-
-      function isNativeFunction(fn) {
+      // Userscripts and extensions that run at document-start can swap this window's clocks,
+      // timers, Event constructor or Function.prototype.toString before this script runs (for
+      // example "timer hooker" speed hacks). A fresh about:blank iframe has its own untouched
+      // built-ins, and those natives work on this window's objects, so everything that a
+      // security decision depends on is taken from there. Without the iframe, the page's
+      // load-time copies are used and the Env chip says so.
+      const cleanFrame = document.createElement('iframe');
+      const cleanWindow = (() => {
         try {
-          return typeof fn === 'function' && fnToString.call(fn).includes('[native code]');
+          cleanFrame.setAttribute('aria-hidden', 'true');
+          cleanFrame.tabIndex = -1;
+          cleanFrame.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden;pointer-events:none;';
+          document.body.appendChild(cleanFrame);
+          const w = cleanFrame.contentWindow;
+          return w && typeof w.Function === 'function' && w.performance && w.Event ? w : null;
+        } catch (_) {
+          return null;
+        }
+      })();
+      const R = cleanWindow || window;
+      const usingCleanRealm = R !== window;
+
+      // `fn.call(self, …)` re-resolves `.call` on every use, so a script that rewrites
+      // R.Function.prototype.call could make isTrusted lie or read the ring position out of a
+      // canvas call. Uncurried copies bind the real `call` once, here: uncurry(fn)(self, …args).
+      const uncurry = (() => {
+        const bind = R.Function.prototype.bind;
+        const call = R.Function.prototype.call;
+        return (fn) => bind.call(call, fn);
+      })();
+
+      const gOPD = R.Object.getOwnPropertyDescriptor;
+      const getOwnNames = R.Object.getOwnPropertyNames;
+      const callFnToString = uncurry(R.Function.prototype.toString);
+      const { abs, hypot, round, floor, ceil, max, min, sqrt, sin, PI } = R.Math;
+      const imul = R.Math.imul;
+      const CleanArray = R.Array;
+      const CleanMap = R.Map;
+      const CleanWeakMap = R.WeakMap;
+      const CleanUint32Array = R.Uint32Array;
+      // Natives that were already hooked inside the fresh frame, i.e. patched in every realm
+      // before this script ran. Those can't be trusted, so they are reported, not hidden.
+      const vaultIssues = new CleanArray();
+      const NATIVE_SOURCE = new R.RegExp('^function (?:get )?([\\w$]*)\\(\\) \\{\\s*\\[native code\\]\\s*\\}$');
+      const CDC_MARKER = new R.RegExp('^\\$?cdc_');
+
+      function sourceOf(fn) {
+        try {
+          return callFnToString(fn);
+        } catch (_) {
+          return '';
+        }
+      }
+
+      // Bound functions and Proxies stringify as a nameless "function () { [native code] }",
+      // so requiring the exact native name also rejects those wrappers.
+      function isNativeNamed(fn, name) {
+        if (typeof fn !== 'function') return false;
+        const match = NATIVE_SOURCE.exec(sourceOf(fn));
+        return !!match && match[1] === name;
+      }
+
+      // Calls the clean-realm native; if that throws (an engine that invalidates a removed
+      // iframe's realm), falls back to this window's copy, but only if it is still native.
+      // A clean copy that no longer reads as native loses to a native page copy.
+      function cleanCaller(clean, own, name) {
+        const cleanOk = typeof clean === 'function' && isNativeNamed(clean, name);
+        const ownOk = typeof own === 'function' && own !== clean && isNativeNamed(own, name);
+        if (typeof clean === 'function' && !cleanOk && usingCleanRealm) vaultIssues.push(name);
+        let primary = null;
+        let fallback = null;
+        if (cleanOk) {
+          primary = uncurry(clean);
+          if (ownOk) fallback = uncurry(own);
+        } else if (ownOk) {
+          primary = uncurry(own);
+        } else if (typeof clean === 'function') {
+          primary = uncurry(clean);
+        }
+        if (!primary || !fallback) return primary;
+        return (self, a, b, c) => {
+          try {
+            return primary(self, a, b, c);
+          } catch (_) {
+            return fallback(self, a, b, c);
+          }
+        };
+      }
+
+      function protoGetter(realm, ctorName, key) {
+        try {
+          const Ctor = realm[ctorName];
+          const desc = Ctor && Ctor.prototype ? gOPD(Ctor.prototype, key) : undefined;
+          return desc && typeof desc.get === 'function' ? desc.get : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function getterCaller(ctorName, key) {
+        return cleanCaller(protoGetter(R, ctorName, key), protoGetter(window, ctorName, key), key);
+      }
+
+      // Every event field the shield looks at is read through a native getter, so an own
+      // property shadowed onto a live or replayed event instance is ignored.
+      const READ = {
+        type: getterCaller('Event', 'type'),
+        timeStamp: getterCaller('Event', 'timeStamp'),
+        eventPhase: getterCaller('Event', 'eventPhase'),
+        currentTarget: getterCaller('Event', 'currentTarget'),
+        target: getterCaller('Event', 'target'),
+        detail: getterCaller('UIEvent', 'detail'),
+        clientX: getterCaller('MouseEvent', 'clientX'),
+        clientY: getterCaller('MouseEvent', 'clientY'),
+        button: getterCaller('MouseEvent', 'button'),
+        pointerId: getterCaller('PointerEvent', 'pointerId'),
+        pointerType: getterCaller('PointerEvent', 'pointerType'),
+        code: getterCaller('KeyboardEvent', 'code'),
+        key: getterCaller('KeyboardEvent', 'key')
+      };
+
+      function read(evt, key) {
+        const reader = READ[key];
+        if (!reader) return undefined;
+        try {
+          return reader(evt);
+        } catch (_) {
+          return undefined;
+        }
+      }
+
+      // `isTrusted` is [LegacyUnforgeable]: spec-compliant engines install it as an own,
+      // non-configurable accessor on every event instance (legacy ones used Event.prototype).
+      // The native getter reads the browser's internal flag and throws on non-events.
+      function isTrustedGetterIn(realm) {
+        try {
+          const own = gOPD(new realm.Event('shield-probe'), 'isTrusted');
+          if (own && typeof own.get === 'function') return own.get;
+        } catch (_) { /* fall back to the legacy prototype location */ }
+        return protoGetter(realm, 'Event', 'isTrusted');
+      }
+      const readTrusted = cleanCaller(isTrustedGetterIn(R), isTrustedGetterIn(window), 'isTrusted');
+
+      function isTrusted(evt) {
+        if (!readTrusted || evt === null || typeof evt !== 'object') return false;
+        try {
+          return readTrusted(evt) === true;
         } catch (_) {
           return false;
         }
       }
 
+      const topPerformance = window.performance;
+      const callPerfNow = cleanCaller(
+        R.Performance && R.Performance.prototype.now,
+        window.Performance && window.Performance.prototype.now,
+        'now'
+      );
+      const perfNow = (() => {
+        try {
+          if (typeof callPerfNow(topPerformance) === 'number') return () => callPerfNow(topPerformance);
+        } catch (_) { /* window.performance was replaced; use the clean realm's own timeline */ }
+        const own = R.performance;
+        return () => callPerfNow(own);
+      })();
+      const callDateNow = cleanCaller(R.Date.now, Date.now, 'now');
+      const dateNow = () => callDateNow(null);
+
+      const callSetTimeout = cleanCaller(R.setTimeout, window.setTimeout, 'setTimeout');
+      const callClearTimeout = cleanCaller(R.clearTimeout, window.clearTimeout, 'clearTimeout');
+      const callRaf = cleanCaller(R.requestAnimationFrame, window.requestAnimationFrame, 'requestAnimationFrame');
+      const callCancelRaf = cleanCaller(R.cancelAnimationFrame, window.cancelAnimationFrame, 'cancelAnimationFrame');
+      const later = (fn, ms) => callSetTimeout(window, fn, ms);
+      const cancelLater = (id) => callClearTimeout(window, id);
+      const nextFrame = (fn) => callRaf(window, fn);
+      const cancelFrame = (id) => callCancelRaf(window, id);
+
+      const callListen = cleanCaller(R.EventTarget.prototype.addEventListener, EventTarget.prototype.addEventListener, 'addEventListener');
+      const listen = (target, type, fn, options) => callListen(target, type, fn, options);
+      const callRect = cleanCaller(R.Element.prototype.getBoundingClientRect, Element.prototype.getBoundingClientRect, 'getBoundingClientRect');
+      const callCapture = cleanCaller(R.Element.prototype.setPointerCapture, Element.prototype.setPointerCapture, 'setPointerCapture');
+      const callRelease = cleanCaller(R.Element.prototype.releasePointerCapture, Element.prototype.releasePointerCapture, 'releasePointerCapture');
+      const callCoalesced = cleanCaller(
+        R.PointerEvent && R.PointerEvent.prototype.getCoalescedEvents,
+        window.PointerEvent && window.PointerEvent.prototype.getCoalescedEvents,
+        'getCoalescedEvents'
+      );
+      const callGetContext = cleanCaller(R.HTMLCanvasElement.prototype.getContext, HTMLCanvasElement.prototype.getContext, 'getContext');
+      const callWebdriver = getterCaller('Navigator', 'webdriver');
+
+      // Ring geometry goes through clean canvas methods, so hooking
+      // CanvasRenderingContext2D.prototype.arc from the console can't leak its position.
+      const C2D = (() => {
+        const clean = R.CanvasRenderingContext2D && R.CanvasRenderingContext2D.prototype;
+        const own = window.CanvasRenderingContext2D && window.CanvasRenderingContext2D.prototype;
+        const pick = (name) => {
+          const c = clean && clean[name];
+          const o = own && own[name];
+          if (typeof c === 'function' && isNativeNamed(c, name)) return uncurry(c);
+          if (typeof c === 'function' && usingCleanRealm) vaultIssues.push(`canvas.${name}`);
+          if (typeof o === 'function' && o !== c && isNativeNamed(o, name)) return uncurry(o);
+          const fn = typeof c === 'function' ? c : o;
+          return typeof fn === 'function' ? uncurry(fn) : null;
+        };
+        return {
+          arc: pick('arc'),
+          beginPath: pick('beginPath'),
+          stroke: pick('stroke'),
+          fill: pick('fill'),
+          fillRect: pick('fillRect'),
+          clearRect: pick('clearRect'),
+          fillText: pick('fillText'),
+          setTransform: pick('setTransform'),
+          save: pick('save'),
+          restore: pick('restore')
+        };
+      })();
+
+      const cleanCrypto = R.crypto;
+      const callRandom = cleanCaller(
+        R.Crypto && R.Crypto.prototype.getRandomValues,
+        window.Crypto && window.Crypto.prototype.getRandomValues,
+        'getRandomValues'
+      );
+
+      const mathRandom = R.Math.random;
+
+      function randomWords(n) {
+        const buf = new CleanUint32Array(n);
+        try {
+          callRandom(cleanCrypto, buf);
+          return buf;
+        } catch (_) { /* clean realm unusable */ }
+        try {
+          callRandom(window.crypto, buf);
+          return buf;
+        } catch (_) { /* no usable Web Crypto */ }
+        for (let i = 0; i < n; i++) buf[i] = floor(mathRandom() * 4294967296);
+        return buf;
+      }
+
+      const CleanMutationObserver = R.MutationObserver || window.MutationObserver;
+      const consoleLog = console.log.bind(console);
+      const consoleClear = console.clear.bind(console);
+      const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
+      // Everything above stays usable once the frame is detached; detaching it means
+      // window.frames no longer hands later page scripts a handle on this realm.
+      const callRemove = cleanCaller(R.Element.prototype.remove, Element.prototype.remove, 'remove');
+      if (cleanWindow && callRemove) {
+        try {
+          callRemove(cleanFrame);
+        } catch (_) { /* left attached; the uncurried natives are still safe */ }
+      }
+
       // =========================================================================
-      // 2. PRIVATE STATE & CRYPTOGRAPHIC TICK HASH CHAIN
+      // 2. CONSTANTS & STATE
       // =========================================================================
       const MAX_COUNT = 1000;
-      const TICK_INTERVAL_MS = 1000;
-      const MIN_VALID_TICK_DELTA_MS = 950;
-      const CIRCUMFERENCE = 2 * Math.PI * 110;
+      const TICK_MS = 1000;
+      // Genuine input reaches its handler within ~1–17 ms of its timeStamp; a captured trusted
+      // event re-fed through a listener later is much older. 1 s leaves room for main-thread jank.
+      const FRESH_EVENT_MS = 1000;
+      // Both clocks must agree on every credited interval; NTP slews are far below this.
+      const SKEW_TOLERANCE_MS = 250;
+      const CIRCUMFERENCE = 2 * PI * 110;
+      const TRAIL_CAP = 2048;
+      const RING_RADIUS = 22;
+      const RING_HIT_SLOP = 6;
+      const RING_HOLD_SLOP = 16;
+      const RING_NEAR_MISS = RING_RADIUS * 3;
+      const RING_HOLD_MIN_MS = 320;
+      const RING_HOLD_SPREAD_MS = 220;
+      const RING_TIMEOUT_MS = 8000;
+      const RING_MIN_DISTANCE = 140;
+      const RING_HEADER = 64;
+      const LOCK_AFTER_FAILS = 3;
+      const LOCK_WINDOW_MS = 60000;
+      const LOCK_BASE_MS = 10000;
+      const LOCK_MAX_MS = 300000;
+      const LOCK_DECAY_MS = 180000;
+      const MONO = '"JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace';
+      const AUTOMATION_GLOBALS = [
+        '__webdriver_evaluate', '__selenium_evaluate', '__selenium_unwrapped', '__webdriver_script_fn',
+        '__driver_evaluate', '__driver_unwrapped', '__fxdriver_evaluate', '__fxdriver_unwrapped',
+        '_phantom', 'callPhantom', '__nightmare', 'domAutomation', 'domAutomationController',
+        '_Selenium_IDE_Recorder', '_selenium', 'calledSelenium'
+      ];
 
-      const seedBuf = new Uint32Array(2);
-      rawGetRandomValues(seedBuf);
-      const SESSION_SEED = seedBuf[0] ^ 0x811c9dc5;
-
+      const CHAIN_SEED = (0x811c9dc5 ^ randomWords(1)[0]) >>> 0;
       let count = 0;
-      let chainHash = SESSION_SEED >>> 0;
-      let running = true;
+      let creditedMs = 0;
+      let running = false;
+      let tickTimer = null;
+      let sampleMono = 0;
+      let sampleWall = 0;
+      let lastLagMs = 0;
+      let lastCatchUp = 0;
+      let chain = CHAIN_SEED;
       let shouldClearConsole = true;
-      let timerId = null;
-      let lastTickPerf = rawPerfNow();
-      let lastTickWall = rawDateNow();
-      let nextExpectedPerf = lastTickPerf + TICK_INTERVAL_MS;
-      let lastMeasuredDriftMs = 0;
       let blockedCount = 0;
-      let internalDomWrite = false;
 
-      // Rolling pointer trajectory & biometric click state
-      const pointerTrail = []; // { x, y, sx, sy, t, pointerType }
-      const MAX_TRAIL_LEN = 48;
-      let movesSinceLastClick = 0;
-      const activePresses = new WeakMap();
-      const hoverEnterTimes = new WeakMap();
-      const recentClickRecords = []; // { x, y, holdMs, timePerf, intervalMs }
-      let lastVerifiedClickPerf = 0;
+      const trail = new CleanArray(); // { x, y, t, type } in client px / event-timeline ms
+      let trailEpoch = 0;
+      const enterTimes = new CleanWeakMap();
+      const presses = new CleanWeakMap();
+      const pressHistory = new CleanArray();
+      let challenge = null;
+      const hardFails = new CleanArray();
+      let lockUntil = 0;
+      let lockLevel = 0;
+      let lastHardFailAt = -Infinity;
+      let lockTimer = null;
+      let automationReason = null;
+      let clockSample = null;
+      let clockHookRatio = null;
+      let lastHookReport = '';
+      let popTimer = null;
+      let clearFlashTimer = null;
+      let domChipTimer = null;
 
-      // DOM elements
-      const countDisplay = document.getElementById('countDisplay');
-      const dialProgress = document.getElementById('dialProgress');
-      const linearFill = document.getElementById('linearFill');
-      const percentText = document.getElementById('percentText');
-      const remainingCountText = document.getElementById('remainingCountText');
-      const elapsedVal = document.getElementById('elapsedVal');
-      const etaVal = document.getElementById('etaVal');
-      const driftVal = document.getElementById('driftVal');
-      const blockedVal = document.getElementById('blockedVal');
-      const chainSig = document.getElementById('chainSig');
-      const statusPill = document.getElementById('statusPill');
-      const statusText = document.getElementById('statusText');
-      const controlsRow = document.getElementById('controlsRow');
-      const toggleBtn = document.getElementById('toggleBtn');
-      const toggleBtnLabel = document.getElementById('toggleBtnLabel');
-      const resetBtn = document.getElementById('resetBtn');
-      const clearCheck = document.getElementById('clearCheck');
-      const clearBadge = document.getElementById('clearBadge');
-      const cmdArg = document.getElementById('cmdArg');
-      const consoleBigOut = document.getElementById('consoleBigOut');
-      const consoleAsciiBar = document.getElementById('consoleAsciiBar');
-      const consoleTimestamp = document.getElementById('consoleTimestamp');
-      const consoleStatusMsg = document.getElementById('consoleStatusMsg');
-      const lastClickTelemetry = document.getElementById('lastClickTelemetry');
-      const chipTrusted = document.getElementById('chipTrusted');
-      const chipPath = document.getElementById('chipPath');
-      const chipHold = document.getElementById('chipHold');
-      const chipEntropy = document.getElementById('chipEntropy');
-      const chipDom = document.getElementById('chipDom');
-      const envIntegrityText = document.getElementById('envIntegrityText');
-      const auditList = document.getElementById('auditList');
+      const $ = (id) => document.getElementById(id);
+      const countDisplay = $('countDisplay');
+      const dialProgress = $('dialProgress');
+      const linearFill = $('linearFill');
+      const percentText = $('percentText');
+      const remainingCountText = $('remainingCountText');
+      const elapsedVal = $('elapsedVal');
+      const etaVal = $('etaVal');
+      const driftVal = $('driftVal');
+      const blockedVal = $('blockedVal');
+      const chainSig = $('chainSig');
+      const statusPill = $('statusPill');
+      const statusText = $('statusText');
+      const controlsZone = $('controlsZone');
+      const toggleBtn = $('toggleBtn');
+      const toggleBtnLabel = $('toggleBtnLabel');
+      const resetBtn = $('resetBtn');
+      const clearCheck = $('clearCheck');
+      const clearBadge = $('clearBadge');
+      const cmdClear = $('cmdClear');
+      const cmdArg = $('cmdArg');
+      const consoleBigOut = $('consoleBigOut');
+      const consoleAsciiBar = $('consoleAsciiBar');
+      const consoleTimestamp = $('consoleTimestamp');
+      const consoleStatusMsg = $('consoleStatusMsg');
+      const shieldStatus = $('shieldStatus');
+      const envIntegrityText = $('envIntegrityText');
+      const auditList = $('auditList');
+      const ringLayer = $('ringLayer');
       const milestones = document.querySelectorAll('.milestone');
+      const CHIPS = {
+        trusted: $('chipTrusted'),
+        live: $('chipLive'),
+        path: $('chipPath'),
+        ring: $('chipRing'),
+        dom: $('chipDom'),
+        env: $('chipEnv')
+      };
+      const ringCtx = (() => {
+        try {
+          return callGetContext(ringLayer, '2d');
+        } catch (_) {
+          return null;
+        }
+      })();
 
       // =========================================================================
-      // 3. HASH CHAIN & FORMATTING HELPERS
+      // 3. GUARDED RENDERING, FORMATTING & SHIELD LOG
       // =========================================================================
-      function stepFnv1a(prevHash, tickNum, deltaMs) {
-        let h = prevHash >>> 0;
-        const payload = `${tickNum}:${rawMathRound(deltaMs)}:${SESSION_SEED}`;
-        for (let i = 0; i < payload.length; i++) {
-          h ^= payload.charCodeAt(i);
-          h = Math.imul(h, 0x01000193) >>> 0;
-        }
-        return h >>> 0;
+      // Every readout is written through these, which remember the expected value so the
+      // DOM watchdog can tell the app's own writes from edits made in DevTools or by scripts.
+      const guardText = new CleanMap();
+      const guardStyle = new CleanMap();
+      const guardClass = new CleanMap();
+
+      function putText(el, text) {
+        guardText.set(el, text);
+        if (el.textContent !== text) el.textContent = text;
+      }
+
+      function putStyle(el, prop, value) {
+        el.style[prop] = value;
+        guardStyle.set(el, { prop, value: el.style[prop] });
+      }
+
+      function putClass(el, cls) {
+        guardClass.set(el, cls);
+        if (el.className !== cls) el.className = cls;
       }
 
       function hexSig(num) {
         return '0x' + (num >>> 0).toString(16).toUpperCase().padStart(8, '0');
       }
 
-      function formatTime(totalSeconds) {
-        const secs = rawMathMax(0, rawMathFloor(totalSeconds + 0.999));
-        const m = rawMathFloor(secs / 60);
+      function stepChain(hash, tick) {
+        let h = hash >>> 0;
+        const payload = `${tick}`;
+        for (let i = 0; i < payload.length; i++) {
+          h ^= payload.charCodeAt(i);
+          h = imul(h, 0x01000193) >>> 0;
+        }
+        return h >>> 0;
+      }
+
+      function formatClock(totalSeconds) {
+        const secs = max(0, floor(totalSeconds));
+        const m = floor(secs / 60);
         const s = secs % 60;
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       }
 
-      function buildAsciiBar(ratio, length = 25) {
-        const filled = rawMathRound(ratio * length);
+      function asciiBar(ratio, length = 25) {
+        const filled = min(length, max(0, round(ratio * length)));
         return '[' + '█'.repeat(filled) + '░'.repeat(length - filled) + ']';
       }
 
-      function appendAuditLog(ok, reason, detail) {
-        internalDomWrite = true;
-        try {
-          const li = document.createElement('li');
-          li.className = `audit-item ${ok ? 'ok' : 'blocked'}`;
-          const left = document.createElement('span');
-          left.textContent = `${ok ? 'PASS' : 'BLOCK'} · ${reason}`;
-          const right = document.createElement('span');
-          right.textContent = detail;
-          li.appendChild(left);
-          li.appendChild(right);
-          auditList.prepend(li);
-          while (auditList.children.length > 8) {
-            auditList.removeChild(auditList.lastElementChild);
-          }
-        } finally {
-          internalDomWrite = false;
-        }
+      function formatAge(ms) {
+        if (!(ms === ms) || ms === Infinity) return 'unknown age';
+        return ms >= 10000 ? `${(ms / 1000).toFixed(1)} s` : `${round(ms)} ms`;
       }
 
-      function flagSpoofAttempt(code, detail, chipEl) {
+      function setChip(name, state) {
+        putClass(CHIPS[name], `hid-chip ${state}`);
+      }
+
+      function setStatus(kind, text) {
+        putClass(shieldStatus, `telemetry ${kind}`);
+        putText(shieldStatus, text);
+        shieldStatus.title = text;
+      }
+
+      const AUDIT_LABEL = { pass: 'PASS', block: 'BLOCK', info: 'NOTE' };
+
+      // Repeats of the newest entry collapse into a ×N counter, so floods can't scroll the log.
+      function addAudit(kind, code, detail) {
+        const top = auditList.firstElementChild;
+        if (top && top.dataset.kind === kind && top.dataset.code === code) {
+          const n = Number(top.dataset.n || '1') + 1;
+          top.dataset.n = String(n);
+          top.children[1].textContent = detail;
+          top.children[1].title = detail;
+          top.children[2].textContent = `×${n}`;
+          return;
+        }
+        const li = document.createElement('li');
+        li.className = `audit-item ${kind}`;
+        li.dataset.kind = kind;
+        li.dataset.code = code;
+        li.dataset.n = '1';
+        const label = document.createElement('span');
+        label.textContent = `${AUDIT_LABEL[kind]} · ${code}`;
+        const det = document.createElement('span');
+        det.className = 'audit-detail';
+        det.textContent = detail;
+        det.title = detail;
+        const cnt = document.createElement('span');
+        cnt.className = 'audit-count';
+        li.append(label, det, cnt);
+        auditList.prepend(li);
+        while (auditList.children.length > 14) auditList.lastElementChild.remove();
+      }
+
+      function block(code, detail, chip, hard, line) {
         blockedCount += 1;
-        internalDomWrite = true;
-        try {
-          blockedVal.textContent = String(blockedCount);
-          blockedVal.className = 'stat-val bad';
-          lastClickTelemetry.textContent = `Blocked: ${code}`;
-          lastClickTelemetry.style.color = '#f87171';
-          if (chipEl) {
-            chipEl.className = 'hid-chip fail';
-          }
-        } finally {
-          internalDomWrite = false;
-        }
-        appendAuditLog(false, code, detail);
-        rawConsoleWarn(`[SECURITY SHIELD] Blocked spoof/fake-HID attempt: ${code} (${detail})`);
+        putText(blockedVal, String(blockedCount));
+        putClass(blockedVal, 'stat-val bad');
+        if (chip) setChip(chip, 'fail');
+        setStatus('bad', line || `Blocked · ${code}`);
+        addAudit('block', code, detail);
+        if (hard) noteHardFailure();
       }
 
-      // =========================================================================
-      // 4. ANTI-SPOOF & ANTI-FAKE-HID BIOMETRIC POINTER VERIFIER
-      // =========================================================================
-      function checkEventTrusted(evt) {
-        if (!evt || typeof evt !== 'object') return false;
-        // Reject shadowed `isTrusted` property on the event instance
-        if (hasOwn.call(evt, 'isTrusted')) return false;
-        if (!rawIsTrustedGetter) return false;
-        try {
-          return rawIsTrustedGetter.call(evt) === true;
-        } catch (_) {
-          return false;
-        }
+      function notice(code, detail, line, kind) {
+        addAudit('info', code, detail);
+        if (line) setStatus(kind || 'warn', line);
       }
 
-      function checkEnvironmentAutomation() {
-        if (navigator.webdriver === true) return 'WEBDRIVER_FLAG';
-        const suspiciousGlobals = [
-          '__webdriver_evaluate',
-          '__selenium_unwrapped',
-          '__fxdriver_evaluate',
-          '__driver_evaluate',
-          '_phantom',
-          'callPhantom',
-          'domAutomation',
-          'domAutomationController'
-        ];
-        for (let i = 0; i < suspiciousGlobals.length; i++) {
-          if (suspiciousGlobals[i] in window) return suspiciousGlobals[i];
-        }
-        return null;
+      function pass(code, detail, line) {
+        addAudit('pass', code, detail);
+        if (line) setStatus('ok', line);
       }
 
-      // Record high-frequency pointer trail for trajectory & kinematics analysis
-      window.addEventListener('pointermove', (e) => {
-        if (!checkEventTrusted(e)) return;
-        const now = rawPerfNow();
-        const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
-        const list = events && events.length ? events : [e];
-        for (let i = 0; i < list.length; i++) {
-          const pt = list[i];
-          pointerTrail.push({
-            x: pt.clientX,
-            y: pt.clientY,
-            sx: pt.screenX,
-            sy: pt.screenY,
-            t: now,
-            pointerType: e.pointerType || 'mouse'
-          });
-          movesSinceLastClick += 1;
-          if (pointerTrail.length > MAX_TRAIL_LEN) {
-            pointerTrail.shift();
-          }
-        }
-      }, { passive: true, capture: true });
-
-      function analyzePointerTrajectory(downEvent) {
-        const now = downEvent.tDown;
-        const recent = pointerTrail.filter((p) => now - p.t <= 3000 && now >= p.t);
-
-        // 1. Stationary Auto-Clicker / Zero-Move Between Clicks Check:
-        if (movesSinceLastClick < 3 || recent.length < 3) {
-          return { ok: false, code: 'TELEPORT_OR_STATIONARY_HID', detail: `${movesSinceLastClick} moves` };
-        }
-
-        // Compute total path length, net displacement, speeds, step deltas, and angular variance
-        let pathLen = 0;
-        const speeds = [];
-        const stepSignatures = [];
-
-        for (let i = 1; i < recent.length; i++) {
-          const dx = recent[i].x - recent[i - 1].x;
-          const dy = recent[i].y - recent[i - 1].y;
-          const dt = rawMathMax(0.5, recent[i].t - recent[i - 1].t);
-          const dist = rawMathHypot(dx, dy);
-          if (dist > 0.05) {
-            pathLen += dist;
-            speeds.push(dist / dt);
-            stepSignatures.push(`${rawMathRound(dx * 2)},${rawMathRound(dy * 2)}`);
-          }
-        }
-
-        const first = recent[0];
-        const last = recent[recent.length - 1];
-        const distToClick = rawMathHypot(downEvent.x - last.x, downEvent.y - last.y);
-
-        // If last recorded move was far away from the pointerdown point, cursor teleported
-        if (distToClick > 95) {
-          return { ok: false, code: 'CURSOR_TELEPORT_JUMP', detail: `jump ${rawMathRound(distToClick)}px` };
-        }
-
-        if (pathLen < 6) {
-          return { ok: false, code: 'ZERO_APPROACH_MOTION', detail: `path ${pathLen.toFixed(1)}px` };
-        }
-
-        // 2. Constant-Step Hardware HID Loop Check (e.g., Arduino Mouse.move(dx, dy) in a loop):
-        if (stepSignatures.length >= 6) {
-          const freq = Object.create(null);
-          let maxIdentical = 0;
-          for (let i = 0; i < stepSignatures.length; i++) {
-            const k = stepSignatures[i];
-            freq[k] = (freq[k] || 0) + 1;
-            if (freq[k] > maxIdentical) maxIdentical = freq[k];
-          }
-          if (maxIdentical / stepSignatures.length >= 0.78) {
-            return {
-              ok: false,
-              code: 'CONSTANT_STEP_HID',
-              detail: `${maxIdentical}/${stepSignatures.length} identical deltas`
-            };
-          }
-        }
-
-        // 3. Linear / Constant-Velocity Fake HID Check:
-        // Hardware/OS mouse scripts (PyAutoGUI, AHK, Arduino HID loops) move in collinear lines at constant speed
-        if (recent.length >= 8 && speeds.length >= 6) {
-          const netDx = last.x - first.x;
-          const netDy = last.y - first.y;
-          const netLen = rawMathHypot(netDx, netDy);
-
-          if (netLen > 25) {
-            // Max perpendicular distance of intermediate points from straight line
-            let maxPerpDev = 0;
-            for (let i = 1; i < recent.length - 1; i++) {
-              const area2 = rawMathAbs(
-                netDy * recent[i].x - netDx * recent[i].y + last.x * first.y - last.y * first.x
-              );
-              const perp = area2 / netLen;
-              if (perp > maxPerpDev) maxPerpDev = perp;
-            }
-
-            // Speed coefficient of variation
-            const meanSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-            const variance = speeds.reduce((acc, s) => acc + (s - meanSpeed) * (s - meanSpeed), 0) / speeds.length;
-            const speedCv = meanSpeed > 0 ? rawMathSqrt(variance) / meanSpeed : 0;
-
-            if (maxPerpDev < 0.08 && speedCv < 0.03) {
-              return {
-                ok: false,
-                code: 'LINEAR_HID_VECTOR',
-                detail: `dev ${maxPerpDev.toFixed(2)}px cv ${speedCv.toFixed(2)}`
-              };
-            }
-          }
-        }
-
-        return {
-          ok: true,
-          samples: recent.length,
-          pathLen: rawMathRound(pathLen)
-        };
+      function flashClearBadge() {
+        putClass(clearBadge, 'clear-flash active');
+        if (clearFlashTimer !== null) cancelLater(clearFlashTimer);
+        clearFlashTimer = later(() => {
+          clearFlashTimer = null;
+          putClass(clearBadge, shouldClearConsole ? 'clear-flash' : 'clear-flash off');
+        }, 220);
       }
 
-      function analyzeMacroEntropy(clickX, clickY, holdMs, nowPerf) {
-        // 1. Minimum human inter-click cooldown
-        if (lastVerifiedClickPerf > 0 && nowPerf - lastVerifiedClickPerf < 180) {
-          return { ok: false, code: 'RAPID_AUTOCLICKER', detail: `${rawMathRound(nowPerf - lastVerifiedClickPerf)}ms gap` };
-        }
-
-        // 2. Stationary coordinate repetition check (2+ consecutive clicks on exact same pixel)
-        if (recentClickRecords.length >= 1) {
-          const prev = recentClickRecords[recentClickRecords.length - 1];
-          const coordDelta = rawMathHypot(clickX - prev.x, clickY - prev.y);
-          if (coordDelta === 0 && recentClickRecords.length >= 2) {
-            const prev2 = recentClickRecords[recentClickRecords.length - 2];
-            if (rawMathHypot(clickX - prev2.x, clickY - prev2.y) === 0) {
-              return { ok: false, code: 'FIXED_COORD_HID_MACRO', detail: `0px variance (${clickX},${clickY})` };
-            }
-          }
-        }
-
-        // 3. Robotic cadence / constant hold duration check across last 4 clicks
-        if (recentClickRecords.length >= 3) {
-          const holds = recentClickRecords.slice(-3).map((r) => r.holdMs).concat(holdMs);
-          const meanHold = holds.reduce((a, b) => a + b, 0) / holds.length;
-          const holdVar = holds.reduce((acc, h) => acc + (h - meanHold) * (h - meanHold), 0) / holds.length;
-          const holdStd = rawMathSqrt(holdVar);
-
-          if (holdStd < 0.75) {
-            return { ok: false, code: 'ROBOTIC_HOLD_CADENCE', detail: `σ=${holdStd.toFixed(2)}ms` };
-          }
-
-          const intervals = recentClickRecords.slice(-2).map((r) => r.intervalMs).concat(nowPerf - lastVerifiedClickPerf);
-          const meanInt = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-          const intVar = intervals.reduce((acc, iv) => acc + (iv - meanInt) * (iv - meanInt), 0) / intervals.length;
-          const intStd = rawMathSqrt(intVar);
-
-          if (intStd < 2.0) {
-            return { ok: false, code: 'ROBOTIC_INTERVAL_MACRO', detail: `σ=${intStd.toFixed(2)}ms` };
-          }
-        }
-
-        return { ok: true };
+      function popCount() {
+        putClass(countDisplay, 'count-value tick-pop');
+        if (popTimer !== null) cancelLater(popTimer);
+        popTimer = later(() => {
+          popTimer = null;
+          putClass(countDisplay, 'count-value');
+        }, 130);
       }
 
-      // Subtle positional shift of controls after each verified click so stationary HID clickers miss
-      function applyAntiCampJitter() {
-        const randBuf = new Uint8Array(2);
-        rawGetRandomValues(randBuf);
-        const dx = 10 + (randBuf[0] % 22);
-        const dy = -4 + (randBuf[1] % 9);
-        internalDomWrite = true;
-        try {
-          controlsRow.style.transform = `translate(${dx}px, ${dy}px)`;
-        } finally {
-          internalDomWrite = false;
-        }
-      }
-
-      function bindHardenedButton(buttonEl, holdFillEl, actionName, onVerifiedAction) {
-        buttonEl.addEventListener('pointerenter', (e) => {
-          if (checkEventTrusted(e)) {
-            hoverEnterTimes.set(buttonEl, rawPerfNow());
-          }
-        });
-
-        buttonEl.addEventListener('pointerdown', (e) => {
-          if (!checkEventTrusted(e)) {
-            flagSpoofAttempt('UNTRUSTED_POINTERDOWN', actionName, chipTrusted);
-            return;
-          }
-          if (e.button !== 0) return;
-
-          const rect = buttonEl.getBoundingClientRect();
-          const insideBounds =
-            e.clientX >= rect.left - 1 &&
-            e.clientX <= rect.right + 1 &&
-            e.clientY >= rect.top - 1 &&
-            e.clientY <= rect.bottom + 1;
-
-          if (!insideBounds || (e.clientX === 0 && e.clientY === 0)) {
-            flagSpoofAttempt('ZERO_COORD_SYNTHETIC', actionName, chipTrusted);
-            return;
-          }
-
-          const now = rawPerfNow();
-          const enterTime = hoverEnterTimes.get(buttonEl) || 0;
-          const dwellMs = enterTime > 0 ? now - enterTime : 0;
-
-          const downRecord = {
-            tDown: now,
-            dwellMs,
-            x: e.clientX,
-            y: e.clientY,
-            sx: e.screenX,
-            sy: e.screenY,
-            pointerId: e.pointerId,
-            pointerType: e.pointerType
-          };
-          activePresses.set(buttonEl, downRecord);
-
-          internalDomWrite = true;
-          try {
-            holdFillEl.style.width = '100%';
-          } finally {
-            internalDomWrite = false;
-          }
-        });
-
-        buttonEl.addEventListener('pointerup', (e) => {
-          internalDomWrite = true;
-          try {
-            holdFillEl.style.width = '0%';
-          } finally {
-            internalDomWrite = false;
-          }
-
-          if (!checkEventTrusted(e)) {
-            activePresses.delete(buttonEl);
-            flagSpoofAttempt('UNTRUSTED_POINTERUP', actionName, chipTrusted);
-            return;
-          }
-
-          const downRecord = activePresses.get(buttonEl);
-          if (!downRecord) {
-            flagSpoofAttempt('ORPHAN_POINTERUP', actionName, chipHold);
-            return;
-          }
-          downRecord.tUp = rawPerfNow();
-          downRecord.upX = e.clientX;
-          downRecord.upY = e.clientY;
-        });
-
-        buttonEl.addEventListener('pointercancel', () => {
-          activePresses.delete(buttonEl);
-          internalDomWrite = true;
-          try {
-            holdFillEl.style.width = '0%';
-          } finally {
-            internalDomWrite = false;
-          }
-        });
-
-        // Intercept click: blocks element.click(), dispatchEvent(), keyboard Enter/Space synthetic click, and fake HID
-        buttonEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-
-          // Check 1: Native Event.prototype.isTrusted
-          if (!checkEventTrusted(e)) {
-            flagSpoofAttempt('SYNTHETIC_JS_CLICK', `${actionName} (!isTrusted)`, chipTrusted);
-            return;
-          }
-
-          // Check 2: Reject detail === 0 or (0,0) coordinates (programmatic / keyboard synthetic button activation)
-          if (e.detail === 0 || (e.clientX === 0 && e.clientY === 0)) {
-            flagSpoofAttempt('SYNTHETIC_DETAIL_ZERO', `${actionName} (no pointer)`, chipTrusted);
-            return;
-          }
-
-          // Check 3: Must have matching physical pointerdown -> pointerup lifecycle
-          const press = activePresses.get(buttonEl);
-          activePresses.delete(buttonEl);
-
-          if (!press || typeof press.tUp !== 'number') {
-            flagSpoofAttempt('BYPASSED_POINTER_PHASE', actionName, chipHold);
-            return;
-          }
-
-          const nowPerf = rawPerfNow();
-          const holdMs = press.tUp - press.tDown;
-
-          // Check 3b: Hover-to-press dwell check (blocks SetCursorPos + instant click in same frame < 8ms)
-          if (press.dwellMs < 8) {
-            flagSpoofAttempt('TELEPORT_ZERO_DWELL', `${press.dwellMs.toFixed(1)}ms hover dwell`, chipPath);
-            return;
-          }
-
-          // Check 4: Biometric switch hold duration (blocks 0–16ms instant HID macro taps & stuck >2500ms macros)
-          if (holdMs < 16 || holdMs > 2500) {
-            flagSpoofAttempt('INVALID_HOLD_BIOMETRIC', `${holdMs.toFixed(1)}ms hold`, chipHold);
-            return;
-          }
-
-          // Check 5: Pointer approach kinematics (blocks teleport clickers & linear constant-speed HID scripts)
-          const traj = analyzePointerTrajectory(press);
-          if (!traj.ok) {
-            flagSpoofAttempt(traj.code, traj.detail, chipPath);
-            return;
-          }
-
-          // Check 6: Coordinate & cadence entropy (blocks stationary auto-clickers & fixed-interval macros)
-          const entropy = analyzeMacroEntropy(e.clientX, e.clientY, holdMs, nowPerf);
-          if (!entropy.ok) {
-            flagSpoofAttempt(entropy.code, entropy.detail, chipEntropy);
-            return;
-          }
-
-          // Record verified human click
-          const intervalMs = lastVerifiedClickPerf > 0 ? nowPerf - lastVerifiedClickPerf : 0;
-          lastVerifiedClickPerf = nowPerf;
-          movesSinceLastClick = 0;
-          recentClickRecords.push({
-            x: e.clientX,
-            y: e.clientY,
-            holdMs,
-            timePerf: nowPerf,
-            intervalMs
-          });
-          if (recentClickRecords.length > 10) recentClickRecords.shift();
-
-          // Clear pointer trail after consumption so next click requires genuine movement
-          pointerTrail.length = 0;
-
-          internalDomWrite = true;
-          try {
-            chipTrusted.className = 'hid-chip pass';
-            chipPath.className = 'hid-chip pass';
-            chipHold.className = 'hid-chip pass';
-            chipEntropy.className = 'hid-chip pass';
-            lastClickTelemetry.textContent = `Verified: ${rawMathRound(holdMs)}ms hold · ${traj.samples} pts`;
-            lastClickTelemetry.style.color = '#34d399';
-          } finally {
-            internalDomWrite = false;
-          }
-
-          appendAuditLog(true, `HUMAN_${actionName.toUpperCase()}`, `hold ${rawMathRound(holdMs)}ms · path ${traj.pathLen}px`);
-          applyAntiCampJitter();
-          onVerifiedAction();
-        });
-      }
-
-      // =========================================================================
-      // 5. CONSOLE OUTPUT & UI RENDERING
-      // =========================================================================
-      function logToBrowserConsole(current, sigHex, driftMs) {
-        const ratio = current / MAX_COUNT;
+      function render() {
+        const ratio = count / MAX_COUNT;
         const pct = (ratio * 100).toFixed(1);
-        const bar = buildAsciiBar(ratio, 25);
+        const left = MAX_COUNT - count;
+        const chk = hexSig(chain);
 
-        if (shouldClearConsole) {
-          rawConsoleClear();
-          internalDomWrite = true;
-          try {
-            clearBadge.classList.add('active');
-          } finally {
-            internalDomWrite = false;
-          }
-          rawSetTimeout(() => {
-            internalDomWrite = true;
-            try {
-              clearBadge.classList.remove('active');
-            } finally {
-              internalDomWrite = false;
-            }
-          }, 220);
+        putText(countDisplay, count.toLocaleString('en-US'));
+        putStyle(dialProgress, 'strokeDashoffset', (CIRCUMFERENCE * (1 - ratio)).toFixed(2));
+        putStyle(linearFill, 'width', `${pct}%`);
+        putText(percentText, `${pct}% complete`);
+        putText(remainingCountText, `${left.toLocaleString('en-US')} ${left === 1 ? 'tick' : 'ticks'} left`);
+        putText(chainSig, `CHK ${chk}`);
+        putText(elapsedVal, formatClock(count));
+        putText(etaVal, formatClock(left));
+        if (lastCatchUp > 0) {
+          putText(driftVal, `+${lastCatchUp}s caught up`);
+          putClass(driftVal, 'stat-val warn');
+        } else {
+          putText(driftVal, `${lastLagMs >= 0 ? '+' : ''}${lastLagMs} ms`);
+          putClass(driftVal, abs(lastLagMs) <= 60 ? 'stat-val good' : 'stat-val warn');
+        }
+        for (let i = 0; i < milestones.length; i++) {
+          const el = milestones[i];
+          putClass(el, count >= Number(el.dataset.m) ? 'milestone reached' : 'milestone');
         }
 
-        rawConsoleLog(
-          `%c${current}%c / ${MAX_COUNT}  %c${bar} ${pct}%  %cSIG:${sigHex} (Δ${driftMs >= 0 ? '+' : ''}${driftMs}ms)`,
+        putClass(cmdClear, shouldClearConsole ? '' : 'is-hidden');
+        putText(cmdArg, String(count));
+        putText(consoleBigOut, `${count} / ${MAX_COUNT}`);
+        putText(consoleAsciiBar, `${asciiBar(ratio)} ${pct}%`);
+        putText(consoleTimestamp, `Tick #${count} · ${chk}`);
+        clearCheck.checked = shouldClearConsole;
+        if (clearFlashTimer === null) putClass(clearBadge, shouldClearConsole ? 'clear-flash' : 'clear-flash off');
+
+        if (count >= MAX_COUNT) {
+          putText(consoleStatusMsg, 'Completed — 1,000 ticks');
+          putClass(statusPill, 'status-pill completed');
+          putText(statusText, 'Completed · 1,000');
+          putText(toggleBtnLabel, 'Restart');
+        } else if (running) {
+          putText(consoleStatusMsg, shouldClearConsole ? 'console.clear() + console.log() every second' : 'console.log() every second');
+          putClass(statusPill, 'status-pill');
+          putText(statusText, 'Running · 1/sec');
+          putText(toggleBtnLabel, 'Pause');
+        } else {
+          putText(consoleStatusMsg, 'Paused by a verified press');
+          putClass(statusPill, 'status-pill paused');
+          putText(statusText, 'Paused');
+          putText(toggleBtnLabel, 'Resume');
+        }
+      }
+
+      function printTick(caughtUp) {
+        if (shouldClearConsole) {
+          consoleClear();
+          flashClearBadge();
+        }
+        const ratio = count / MAX_COUNT;
+        const pct = (ratio * 100).toFixed(1);
+        const extra = (caughtUp > 0 ? `  · caught up +${caughtUp}` : '') + (blockedCount ? `  · ${blockedCount} blocked` : '');
+        consoleLog(
+          `%c${count}%c / ${MAX_COUNT}  %c${asciiBar(ratio)} ${pct}%  %cCHK ${hexSig(chain)}${extra}`,
           'color:#38bdf8;font-weight:700;font-size:16px;',
           'color:#94a3b8;font-size:13px;',
           'color:#34d399;font-family:monospace;font-size:12px;',
           'color:#818cf8;font-family:monospace;font-size:11px;'
         );
-
-        if (current >= MAX_COUNT) {
-          rawConsoleLog(
-            `%cDone! Reached 1,000 · Final Chain Signature: ${sigHex}`,
-            'color:#34d399;font-weight:700;font-size:13px;'
-          );
-        }
-      }
-
-      function renderUI() {
-        internalDomWrite = true;
-        try {
-          const ratio = count / MAX_COUNT;
-          const pct = (ratio * 100).toFixed(1);
-          const remainingTicks = MAX_COUNT - count;
-          const elapsedSeconds = count;
-          const remainingSeconds = remainingTicks;
-          const sigHex = hexSig(chainHash);
-
-          countDisplay.textContent = count.toLocaleString();
-          clearCheck.checked = shouldClearConsole;
-          countDisplay.classList.add('tick-pop');
-          rawSetTimeout(() => {
-            internalDomWrite = true;
-            try {
-              countDisplay.classList.remove('tick-pop');
-            } finally {
-              internalDomWrite = false;
-            }
-          }, 130);
-
-          const offset = CIRCUMFERENCE * (1 - ratio);
-          dialProgress.style.strokeDashoffset = offset.toFixed(2);
-          linearFill.style.width = `${pct}%`;
-
-          percentText.textContent = `${pct}% Complete`;
-          remainingCountText.textContent = `${remainingTicks.toLocaleString()} ${remainingTicks === 1 ? 'tick' : 'ticks'} left`;
-          chainSig.textContent = `SIG: ${sigHex}`;
-
-          elapsedVal.textContent = formatTime(elapsedSeconds);
-          etaVal.textContent = formatTime(remainingSeconds);
-          driftVal.textContent = `${lastMeasuredDriftMs >= 0 ? '+' : ''}${lastMeasuredDriftMs} ms`;
-          driftVal.className = rawMathAbs(lastMeasuredDriftMs) <= 60 ? 'stat-val good' : 'stat-val bad';
-
-          milestones.forEach((el) => {
-            const m = Number(el.dataset.m);
-            el.classList.toggle('reached', count >= m);
-          });
-
-          cmdArg.textContent = String(count);
-          consoleBigOut.textContent = `${count} / ${MAX_COUNT}`;
-          consoleAsciiBar.textContent = `${buildAsciiBar(ratio, 25)} ${pct}%`;
-          consoleTimestamp.textContent = `Tick #${count} · ${sigHex}`;
-
-          if (count >= MAX_COUNT) {
-            consoleStatusMsg.textContent = 'Completed — 1,000 verified ticks!';
-            statusPill.className = 'status-pill completed';
-            statusText.textContent = 'Completed · 1,000';
-            toggleBtnLabel.textContent = 'Restart';
-          } else if (running) {
-            consoleStatusMsg.textContent = 'Clearing & printing every 1000ms (Hardware Locked)';
-            statusPill.className = 'status-pill';
-            statusText.textContent = 'Running · 1/sec Locked';
-            toggleBtnLabel.textContent = 'Pause';
-          } else {
-            consoleStatusMsg.textContent = 'Paused by verified user';
-            statusPill.className = 'status-pill paused';
-            statusText.textContent = 'Paused';
-            toggleBtnLabel.textContent = 'Resume';
-          }
-        } finally {
-          internalDomWrite = false;
-        }
-      }
-
-      // =========================================================================
-      // 6. MONOTONIC DUAL-CLOCK DRIFT-COMPENSATED 1-SECOND ENGINE
-      // =========================================================================
-      function scheduleNextTick() {
-        if (!running || count >= MAX_COUNT) return;
-        const nowPerf = rawPerfNow();
-        const delay = rawMathMax(20, nextExpectedPerf - nowPerf);
-        timerId = rawSetTimeout(stepTick, delay);
-      }
-
-      function stepTick() {
-        if (!running || count >= MAX_COUNT) return;
-
-        const nowPerf = rawPerfNow();
-        const nowWall = rawDateNow();
-        const monoDelta = nowPerf - lastTickPerf;
-        const wallDelta = nowWall - lastTickWall;
-
-        // Guard against premature timer firing or time-warp injection
-        if (monoDelta < MIN_VALID_TICK_DELTA_MS) {
-          const remainingWait = rawMathMax(15, TICK_INTERVAL_MS - monoDelta);
-          timerId = rawSetTimeout(stepTick, remainingWait);
-          return;
-        }
-
-        // Cross-check wall clock vs monotonic clock to detect Date/Performance spoofing
-        const clockSkew = rawMathAbs(monoDelta - wallDelta);
-        if (clockSkew > 450) {
-          flagSpoofAttempt('CLOCK_SKEW_SPOOF', `Δmono=${rawMathRound(monoDelta)}ms Δwall=${wallDelta}ms`, null);
-          lastTickPerf = nowPerf;
-          lastTickWall = nowWall;
-          nextExpectedPerf = nowPerf + TICK_INTERVAL_MS;
-          scheduleNextTick();
-          return;
-        }
-
-        lastMeasuredDriftMs = rawMathRound(nowPerf - nextExpectedPerf);
-        lastTickPerf = nowPerf;
-        lastTickWall = nowWall;
-        nextExpectedPerf += TICK_INTERVAL_MS;
-        if (nowPerf - nextExpectedPerf > TICK_INTERVAL_MS) {
-          nextExpectedPerf = nowPerf + TICK_INTERVAL_MS;
-        }
-
-        count += 1;
-        chainHash = stepFnv1a(chainHash, count, monoDelta);
-
-        logToBrowserConsole(count, hexSig(chainHash), lastMeasuredDriftMs);
-        renderUI();
-
         if (count >= MAX_COUNT) {
-          stopLoop();
-          appendAuditLog(true, 'COMPLETED_1000', `final ${hexSig(chainHash)}`);
-        } else {
-          scheduleNextTick();
+          consoleLog('%cDone! Reached 1,000.', 'color:#34d399;font-weight:700;font-size:13px;');
         }
       }
 
-      function startLoop() {
-        if (timerId !== null) {
-          rawClearTimeout(timerId);
-          timerId = null;
+      // =========================================================================
+      // 4. CREDITED-TIME 1-SECOND ENGINE
+      // =========================================================================
+      // The count is whole seconds of verified running time, not "number of timer callbacks".
+      // Late timers (background-tab throttling, a stalled main thread) catch up instead of
+      // drifting, early or extra wake-ups credit nothing, and an interval where the monotonic
+      // and wall clocks disagree (a one-sided time warp, sleep, a system clock change) is
+      // credited only the smaller of the two.
+      function creditElapsed() {
+        const mono = perfNow();
+        const wall = dateNow();
+        const dMono = mono - sampleMono;
+        const dWall = wall - sampleWall;
+        sampleMono = mono;
+        sampleWall = wall;
+        if (!(dMono > 0)) return;
+        let credit = dMono;
+        if (!(abs(dMono - dWall) <= SKEW_TOLERANCE_MS + dMono * 0.01)) {
+          credit = dWall > 0 ? min(dMono, dWall) : 0;
+          notice('CLOCK_SKEW', `monotonic +${round(dMono)} ms vs wall ${dWall >= 0 ? '+' : ''}${round(dWall)} ms → credited ${round(credit)} ms`);
         }
+        creditedMs = min(MAX_COUNT * TICK_MS, creditedMs + credit);
+      }
+
+      function scheduleTick() {
+        if (!running || count >= MAX_COUNT) return;
+        const wait = (count + 1) * TICK_MS - creditedMs;
+        tickTimer = later(onTick, max(1, wait + 1));
+      }
+
+      function onTick() {
+        tickTimer = null;
+        if (!running) return;
+        creditElapsed();
+        const due = min(MAX_COUNT, floor(creditedMs / TICK_MS));
+        if (due > count) {
+          lastCatchUp = due - count - 1;
+          while (count < due) {
+            count += 1;
+            chain = stepChain(chain, count);
+          }
+          lastLagMs = round(creditedMs - count * TICK_MS);
+          printTick(lastCatchUp);
+          render();
+          popCount();
+          if (count >= MAX_COUNT) {
+            running = false;
+            render();
+            pass('COMPLETED_1000', `final CHK ${hexSig(chain)}`, 'Completed — 1,000 ticks');
+            return;
+          }
+        }
+        scheduleTick();
+      }
+
+      function pauseCounter() {
+        if (!running) return;
+        creditElapsed();
+        running = false;
+        if (tickTimer !== null) {
+          cancelLater(tickTimer);
+          tickTimer = null;
+        }
+        render();
+      }
+
+      function resumeCounter() {
+        if (running || count >= MAX_COUNT) return;
+        sampleMono = perfNow();
+        sampleWall = dateNow();
         running = true;
-        lastTickPerf = rawPerfNow();
-        lastTickWall = rawDateNow();
-        nextExpectedPerf = lastTickPerf + TICK_INTERVAL_MS;
-        renderUI();
-        scheduleNextTick();
+        render();
+        scheduleTick();
       }
 
-      function stopLoop() {
-        if (timerId !== null) {
-          rawClearTimeout(timerId);
-          timerId = null;
+      function resetCounter() {
+        if (tickTimer !== null) {
+          cancelLater(tickTimer);
+          tickTimer = null;
         }
         running = false;
-        renderUI();
-      }
-
-      function resetCounter(autoStart = true) {
-        if (timerId !== null) {
-          rawClearTimeout(timerId);
-          timerId = null;
-        }
         count = 0;
-        chainHash = SESSION_SEED >>> 0;
-        lastMeasuredDriftMs = 0;
-        if (shouldClearConsole) {
-          rawConsoleClear();
+        creditedMs = 0;
+        chain = CHAIN_SEED;
+        lastLagMs = 0;
+        lastCatchUp = 0;
+        printTick(0);
+        resumeCounter();
+      }
+
+      function actionLabel(kind) {
+        if (kind === 'reset') return 'Reset';
+        if (count >= MAX_COUNT) return 'Restart';
+        return running ? 'Pause' : 'Resume';
+      }
+
+      function runAction(kind) {
+        if (kind === 'reset' || count >= MAX_COUNT) {
+          resetCounter();
+          return kind === 'reset' ? 'Reset to 0' : 'Restarted';
         }
-        renderUI();
-        if (autoStart) {
-          startLoop();
+        if (running) {
+          pauseCounter();
+          return 'Paused';
         }
+        resumeCounter();
+        return 'Resumed';
       }
 
       // =========================================================================
-      // 7. DOM TAMPER & PROTOTYPE INTEGRITY WATCHDOG
+      // 5. INPUT SHIELD: LIVE-EVENT SCREENING & POINTER KINEMATICS
       // =========================================================================
-      const domObserver = new MutationObserver(() => {
-        if (internalDomWrite) return;
-        const expectedText = count.toLocaleString();
-        if (countDisplay.textContent !== expectedText) {
-          flagSpoofAttempt('DOM_COUNT_TAMPER', `forced "${countDisplay.textContent}" -> "${expectedText}"`, chipDom);
-          renderUI();
+      function eventTime(evt) {
+        const t = read(evt, 'timeStamp');
+        return typeof t === 'number' ? t : NaN;
+      }
+
+      // Modern engines stamp events on the performance.now() timeline; very old ones used epoch ms.
+      const eventsUsePerfClock = (() => {
+        try {
+          return !(eventTime(new window.Event('shield-probe')) > 1e12);
+        } catch (_) {
+          return true;
         }
-      });
+      })();
 
-      domObserver.observe(countDisplay, {
-        childList: true,
-        characterData: true,
-        subtree: true
-      });
+      function eventAge(evt) {
+        const t = eventTime(evt);
+        if (!(t === t)) return Infinity;
+        return (eventsUsePerfClock ? perfNow() : dateNow()) - t;
+      }
 
-      // Block global synthetic keyboard click triggers & untrusted events
-      window.addEventListener('keydown', (e) => {
-        if (!checkEventTrusted(e)) {
-          flagSpoofAttempt('UNTRUSTED_KEYDOWN', e.code || 'key', chipTrusted);
-          e.preventDefault();
+      // A trusted event stays trusted forever, so trust alone can't stop a captured event from
+      // being fed straight into a listener later (DevTools getEventListeners()). A genuine
+      // event is only ever seen inside its own dispatch, at the element it was dispatched to,
+      // with a fresh timestamp.
+      function screenEvent(evt, el, type) {
+        if (!isTrusted(evt)) {
+          return { code: 'SYNTHETIC_EVENT', detail: `${type} with isTrusted=false`, chip: 'trusted' };
+        }
+        const phase = read(evt, 'eventPhase');
+        if (read(evt, 'type') !== type || !(phase >= 1 && phase <= 3) || read(evt, 'currentTarget') !== el) {
+          return { code: 'REPLAYED_EVENT', detail: `${type} delivered outside its own dispatch`, chip: 'live' };
+        }
+        const age = eventAge(evt);
+        if (!(age >= -50 && age <= FRESH_EVENT_MS)) {
+          return { code: 'STALE_EVENT', detail: `${type} replayed ${formatAge(age)} after it happened`, chip: 'live' };
+        }
+        return null;
+      }
+
+      function pushSample(x, y, t, type) {
+        if (typeof x !== 'number' || typeof y !== 'number' || !(t === t)) return;
+        trail.push({ x, y, t, type });
+      }
+
+      // Coalesced samples carry their own native timestamps, so a 1000 Hz mouse yields its real
+      // path rather than one point per frame.
+      listen(window, 'pointermove', (e) => {
+        if (screenEvent(e, window, 'pointermove')) return;
+        const type = read(e, 'pointerType') || 'mouse';
+        let list = null;
+        if (callCoalesced) {
+          try {
+            list = callCoalesced(e);
+          } catch (_) {
+            list = null;
+          }
+        }
+        if (list && list.length) {
+          for (let i = 0; i < list.length; i++) {
+            pushSample(read(list[i], 'clientX'), read(list[i], 'clientY'), eventTime(list[i]), type);
+          }
+        } else {
+          pushSample(read(e, 'clientX'), read(e, 'clientY'), eventTime(e), type);
+        }
+        if (trail.length > TRAIL_CAP + 256) trail.splice(0, trail.length - TRAIL_CAP);
+      }, { capture: true, passive: true });
+
+      function fail(code, detail) {
+        return { ok: false, code, detail };
+      }
+
+      // Mouse approach to a press point, using only moves since `sinceT` (the last action), so
+      // every action needs its own fresh movement.
+      function analyzeApproach(press, sinceT, opt) {
+        const all = new CleanArray();
+        for (let i = trail.length - 1; i >= 0 && all.length < 800; i--) {
+          const p = trail[i];
+          if (p.t > press.t + 2) continue;
+          if (p.t < sinceT) break;
+          if (p.type === 'mouse') all.push(p);
+        }
+        all.reverse();
+        if (all.length < 3) return fail('NO_APPROACH_MOTION', `${all.length} pointer moves since the last action`);
+
+        const last = all[all.length - 1];
+        const gap = hypot(press.x - last.x, press.y - last.y);
+        if (gap > opt.maxGap) return fail('CURSOR_TELEPORT', `pressed ${round(gap)} px away from the last pointer position`);
+
+        let pathLen = 0;
+        for (let i = 1; i < all.length; i++) pathLen += hypot(all[i].x - all[i - 1].x, all[i].y - all[i - 1].y);
+
+        // People decelerate onto a target; a script that jumps onto it doesn't.
+        let finalStep = 0;
+        for (let i = all.length - 1, seen = 0; i > 0 && seen < 3; i--) {
+          const d = hypot(all[i].x - all[i - 1].x, all[i].y - all[i - 1].y);
+          if (d > 0.01) {
+            seen += 1;
+            if (d > finalStep) finalStep = d;
+          }
+        }
+        if (finalStep > opt.maxFinalStep) return fail('CURSOR_TELEPORT', `jumped ${round(finalStep)} px onto the target`);
+        if (pathLen < opt.minPath) return fail('NO_APPROACH_MOTION', `only ${pathLen.toFixed(1)} px of pointer travel`);
+
+        const recent = new CleanArray();
+        for (let i = 0; i < all.length; i++) {
+          if (all[i].t >= press.t - 1500) recent.push(all[i]);
+        }
+        const shape = approachShape(recent);
+        if (shape) return shape;
+        return { ok: true, samples: all.length, pathLen: round(pathLen) };
+      }
+
+      // Thresholds are deliberately loose: slow 1 px steps and short straight flicks from real
+      // high-polling mice must pass. What fails is the signature of a loop: the same multi-pixel
+      // step over and over, or a ruler-straight path with near-identical step lengths.
+      function approachShape(pts) {
+        const steps = new CleanArray();
+        const stepCounts = new CleanMap();
+        let topRepeat = 0;
+        for (let i = 1; i < pts.length; i++) {
+          const dx = pts[i].x - pts[i - 1].x;
+          const dy = pts[i].y - pts[i - 1].y;
+          const d = hypot(dx, dy);
+          if (d <= 0.01) continue;
+          steps.push(d);
+          if (d >= 2) {
+            const key = `${round(dx * 2)},${round(dy * 2)}`;
+            const n = (stepCounts.get(key) || 0) + 1;
+            stepCounts.set(key, n);
+            if (n > topRepeat) topRepeat = n;
+          }
+        }
+        const moving = steps.length;
+        if (moving >= 10 && topRepeat / moving >= 0.85) {
+          return fail('CONSTANT_STEP_HID', `${topRepeat}/${moving} identical pointer steps`);
+        }
+        if (moving >= 8) {
+          const first = pts[0];
+          const last = pts[pts.length - 1];
+          const ndx = last.x - first.x;
+          const ndy = last.y - first.y;
+          const net = hypot(ndx, ndy);
+          if (net > 30) {
+            let dev = 0;
+            for (let i = 1; i < pts.length - 1; i++) {
+              const d = abs(ndy * pts[i].x - ndx * pts[i].y + last.x * first.y - last.y * first.x) / net;
+              if (d > dev) dev = d;
+            }
+            let sum = 0;
+            for (let i = 0; i < moving; i++) sum += steps[i];
+            const mean = sum / moving;
+            let variance = 0;
+            for (let i = 0; i < moving; i++) variance += (steps[i] - mean) * (steps[i] - mean);
+            const cv = mean > 0 ? sqrt(variance / moving) / mean : 0;
+            if (dev < 0.5 && cv < 0.08) {
+              return fail('LINEAR_HID_PATH', `straight within ${dev.toFixed(2)} px, step CV ${cv.toFixed(3)}`);
+            }
+          }
+        }
+        return null;
+      }
+
+      function spread(values) {
+        let sum = 0;
+        for (let i = 0; i < values.length; i++) sum += values[i];
+        const mean = sum / values.length;
+        let variance = 0;
+        for (let i = 0; i < values.length; i++) variance += (values[i] - mean) * (values[i] - mean);
+        return sqrt(variance / values.length);
+      }
+
+      // Holds under 20 ms (trackpad tap-to-click) are exempt from the hold-cadence rule.
+      function checkCadence(x, y, hold, t) {
+        const n = pressHistory.length;
+        if (n && t - pressHistory[n - 1].t < 180) {
+          return fail('RAPID_AUTOCLICK', `${round(t - pressHistory[n - 1].t)} ms after the previous press`);
+        }
+        if (n >= 2) {
+          const a = pressHistory[n - 1];
+          const b = pressHistory[n - 2];
+          if (a.x === x && a.y === y && b.x === x && b.y === y) {
+            return fail('FIXED_COORD_MACRO', `3 presses on exactly (${round(x)}, ${round(y)})`);
+          }
+        }
+        if (n >= 3) {
+          const h = new CleanArray(pressHistory[n - 3].hold, pressHistory[n - 2].hold, pressHistory[n - 1].hold, hold);
+          if (h[0] >= 20 && h[1] >= 20 && h[2] >= 20 && h[3] >= 20 && spread(h) < 0.75) {
+            return fail('ROBOTIC_HOLD', `last 4 holds within σ ${spread(h).toFixed(2)} ms`);
+          }
+          const gaps = new CleanArray(
+            pressHistory[n - 2].t - pressHistory[n - 3].t,
+            pressHistory[n - 1].t - pressHistory[n - 2].t,
+            t - pressHistory[n - 1].t
+          );
+          if (spread(gaps) < 2) {
+            return fail('ROBOTIC_INTERVAL', `press intervals within σ ${spread(gaps).toFixed(2)} ms`);
+          }
+        }
+        return null;
+      }
+
+      // Escalating cooldown after repeated failures of real (trusted, live) input. Synthetic and
+      // replayed events never count here, so page scripts can't lock the user out. The level
+      // only decays after a clean stretch that starts when the last cooldown ends; otherwise any
+      // cooldown longer than LOCK_DECAY_MS would reset the escalation by itself.
+      function noteHardFailure() {
+        const now = perfNow();
+        if (now - max(lastHardFailAt, lockUntil) > LOCK_DECAY_MS) lockLevel = 0;
+        lastHardFailAt = now;
+        hardFails.push(now);
+        while (hardFails.length && now - hardFails[0] > LOCK_WINDOW_MS) hardFails.shift();
+        if (hardFails.length < LOCK_AFTER_FAILS) return;
+        hardFails.length = 0;
+        const duration = min(LOCK_MAX_MS, LOCK_BASE_MS * 2 ** lockLevel);
+        lockLevel += 1;
+        lockUntil = now + duration;
+        notice('CONTROLS_LOCKED', `${round(duration / 1000)} s cooldown after ${LOCK_AFTER_FAILS} failed verifications`);
+        refreshLock();
+      }
+
+      function lockRemaining() {
+        return max(0, lockUntil - perfNow());
+      }
+
+      function refreshLock() {
+        if (lockTimer !== null) {
+          cancelLater(lockTimer);
+          lockTimer = null;
+        }
+        if (challenge) cancelChallenge(null);
+        const left = lockRemaining();
+        if (left > 0) {
+          putClass(controlsZone, 'controls-zone locked');
+          setStatus('bad', `Locked · ${ceil(left / 1000)} s cooldown`);
+          lockTimer = later(refreshLock, min(250, left + 5));
           return;
         }
-        // Prevent holding Space/Enter on focused buttons from synthesizing detail===0 click events
-        if ((e.code === 'Space' || e.code === 'Enter') && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+        putClass(controlsZone, automationReason ? 'controls-zone locked' : 'controls-zone');
+        if (!automationReason) setStatus('info', 'Cooldown over — controls ready');
+      }
+
+      // =========================================================================
+      // 6. SHIELDED CONTROLS (step 1: verified press on the button)
+      // =========================================================================
+      function bindControl(btn, fill, kind) {
+        listen(btn, 'pointerenter', (e) => {
+          if (!screenEvent(e, btn, 'pointerenter')) enterTimes.set(btn, eventTime(e));
+        });
+
+        listen(btn, 'pointerdown', (e) => {
+          const verdict = screenEvent(e, btn, 'pointerdown');
+          if (verdict) {
+            presses.delete(btn);
+            block(verdict.code, `${actionLabel(kind)} ${verdict.detail}`, verdict.chip, false);
+            return;
+          }
+          if (read(e, 'button') !== 0) return;
+          const t = eventTime(e);
+          const enter = enterTimes.get(btn);
+          presses.set(btn, {
+            type: read(e, 'pointerType') || 'mouse',
+            tDown: t,
+            tUp: undefined,
+            x: read(e, 'clientX'),
+            y: read(e, 'clientY'),
+            dwell: typeof enter === 'number' && enter <= t ? t - enter : null
+          });
+          putStyle(fill, 'width', '100%');
+        });
+
+        listen(btn, 'pointerup', (e) => {
+          putStyle(fill, 'width', '0%');
+          const verdict = screenEvent(e, btn, 'pointerup');
+          if (verdict) {
+            presses.delete(btn);
+            block(verdict.code, `${actionLabel(kind)} ${verdict.detail}`, verdict.chip, false);
+            return;
+          }
+          const press = presses.get(btn);
+          if (press && press.tUp === undefined) press.tUp = eventTime(e);
+        });
+
+        listen(btn, 'pointercancel', () => {
+          presses.delete(btn);
+          putStyle(fill, 'width', '0%');
+        });
+
+        listen(btn, 'click', (e) => onControlClick(btn, kind, e));
+      }
+
+      function onControlClick(btn, kind, e) {
+        const label = actionLabel(kind);
+        const verdict = screenEvent(e, btn, 'click');
+        if (verdict) {
+          presses.delete(btn);
+          block(verdict.code, `${label} ${verdict.detail}`, verdict.chip, false);
+          return;
+        }
+        const press = presses.get(btn);
+        presses.delete(btn);
+
+        if (automationReason) {
+          block('AUTOMATION_FLAG', `${automationReason}: controls are disabled`, 'env', false, 'Automation detected — controls disabled');
+          return;
+        }
+        const lockLeft = lockRemaining();
+        if (lockLeft > 0) {
+          notice('LOCKED', `${label} ignored during cooldown`, `Locked · ${ceil(lockLeft / 1000)} s cooldown`, 'bad');
+          return;
+        }
+        if (challenge) return;
+
+        const detail = read(e, 'detail');
+        if (!press) {
+          if (detail === 0 || read(e, 'pointerType') === '') {
+            notice('KEYBOARD_ACTIVATION', `${label} via keyboard: a fake HID keyboard looks identical, so a pointer is required`, 'Keyboard can’t be verified — use a pointer');
+            return;
+          }
+          block('NO_PRESS_LIFECYCLE', `${label} click without a matching pointerdown`, 'live', true);
+          return;
+        }
+        const tClick = eventTime(e);
+        if (press.tUp === undefined || !(tClick - press.tUp <= 1000)) {
+          block('NO_PRESS_LIFECYCLE', `${label} click without a matching release`, 'live', true);
+          return;
+        }
+        if (detail === 0) {
+          block('SYNTHETIC_DETAIL_ZERO', `${label} pointer click with detail=0`, 'trusted', true);
+          return;
+        }
+
+        if (press.type === 'mouse') {
+          if (press.dwell !== null && press.dwell < 8) {
+            trailEpoch = perfNow();
+            block('ZERO_DWELL_TELEPORT', `${label} pressed ${press.dwell.toFixed(1)} ms after the cursor arrived`, 'path', true);
+            return;
+          }
+          const path = analyzeApproach({ x: press.x, y: press.y, t: press.tDown }, trailEpoch, { minPath: 6, maxGap: 40, maxFinalStep: 120 });
+          if (!path.ok) {
+            trailEpoch = perfNow();
+            block(path.code, path.detail, 'path', true);
+            return;
+          }
+        }
+
+        const cadence = checkCadence(press.x, press.y, press.tUp - press.tDown, press.tDown);
+        if (cadence) {
+          trailEpoch = perfNow();
+          block(cadence.code, cadence.detail, 'path', true);
+          return;
+        }
+        pressHistory.push({ x: press.x, y: press.y, hold: press.tUp - press.tDown, t: press.tDown });
+        if (pressHistory.length > 8) pressHistory.shift();
+
+        setChip('trusted', 'pass');
+        setChip('live', 'pass');
+        setChip('path', 'pass');
+        startChallenge(kind, press);
+      }
+
+      // =========================================================================
+      // 7. RING CONFIRM (step 2: hold a ring at a random, DOM-invisible position)
+      // =========================================================================
+      // A blind HID macro replays fixed coordinates; it can't see where the ring was drawn.
+      // The position lives only in this closure and in canvas pixels, never in the DOM.
+      function pickRingSpot(vis, from, r) {
+        const minX = vis.left + r + 18;
+        const maxX = vis.right - r - 18;
+        const minY = vis.top + RING_HEADER + r;
+        const maxY = vis.bottom - r - 18;
+        if (!(maxX > minX) || !(maxY > minY)) {
+          return { x: (vis.left + vis.right) / 2, y: (vis.top + vis.bottom) / 2 };
+        }
+        const want = min(RING_MIN_DISTANCE, 0.45 * hypot(maxX - minX, maxY - minY));
+        const words = randomWords(64);
+        let best = null;
+        let bestDist = -1;
+        for (let i = 0; i < 32; i++) {
+          const x = minX + (words[2 * i] / 4294967296) * (maxX - minX);
+          const y = minY + (words[2 * i + 1] / 4294967296) * (maxY - minY);
+          const d = hypot(x - from.x, y - from.y);
+          if (d >= want) return { x, y };
+          if (d > bestDist) {
+            bestDist = d;
+            best = { x, y };
+          }
+        }
+        return best;
+      }
+
+      function startChallenge(kind, press) {
+        const label = actionLabel(kind);
+        if (!ringCtx) {
+          const result = runAction(kind);
+          pass(label.toUpperCase(), 'canvas unavailable: confirmed by press checks only', result);
+          return;
+        }
+        putClass(ringLayer, 'ring-layer active');
+        const rect = callRect(ringLayer);
+        const dpr = min(3, window.devicePixelRatio || 1);
+        ringLayer.width = round(rect.width * dpr);
+        ringLayer.height = round(rect.height * dpr);
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+        const vis = {
+          left: max(0, -rect.left),
+          top: max(0, -rect.top),
+          right: min(rect.width, vw - rect.left),
+          bottom: min(rect.height, vh - rect.top)
+        };
+        const from = { x: press.x - rect.left, y: press.y - rect.top };
+        const spot = pickRingSpot(vis, from, RING_RADIUS);
+        const now = perfNow();
+        challenge = {
+          kind,
+          label,
+          dpr,
+          w: rect.width,
+          h: rect.height,
+          vw,
+          vis,
+          x: spot.x,
+          y: spot.y,
+          r: RING_RADIUS,
+          need: RING_HOLD_MIN_MS + (randomWords(1)[0] % (RING_HOLD_SPREAD_MS + 1)),
+          startT: now,
+          deadline: now + RING_TIMEOUT_MS,
+          minPath: min(60, 0.4 * hypot(spot.x - from.x, spot.y - from.y)),
+          misses: 0,
+          miss: null,
+          press: null,
+          approach: null,
+          frame: 0
+        };
+        trailEpoch = now;
+        setChip('ring', 'warn');
+        setStatus('info', `Hold the ring to confirm ${label}`);
+        challenge.frame = nextFrame(drawRing);
+      }
+
+      function circle(ctx, x, y, r) {
+        C2D.beginPath(ctx);
+        C2D.arc(ctx, x, y, r, 0, PI * 2);
+      }
+
+      function drawRing() {
+        const c = challenge;
+        if (!c) return;
+        const now = perfNow();
+        if (c.press && now - c.press.t >= c.need) {
+          completeChallenge(now);
+          return;
+        }
+        if (!c.press && now >= c.deadline) {
+          cancelChallenge('Timed out — press the control again');
+          return;
+        }
+        try {
+          const rect = callRect(ringLayer);
+          if (abs(rect.width - c.w) > 0.5 || abs(rect.height - c.h) > 0.5) {
+            c.w = rect.width;
+            c.h = rect.height;
+            ringLayer.width = round(c.w * c.dpr);
+            ringLayer.height = round(c.h * c.dpr);
+          }
+          const ctx = ringCtx;
+          const { vis } = c;
+          C2D.setTransform(ctx, c.dpr, 0, 0, c.dpr, 0, 0);
+          C2D.clearRect(ctx, 0, 0, c.w, c.h);
+          ctx.fillStyle = 'rgba(6, 9, 15, 0.76)';
+          C2D.fillRect(ctx, 0, 0, c.w, c.h);
+
+          const left = vis.left + 24;
+          const right = vis.right - 24;
+          const top = vis.top + 22;
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'left';
+          ctx.font = `700 12px ${MONO}`;
+          ctx.fillStyle = '#e2e8f0';
+          C2D.fillText(ctx, `Confirm ${c.label}`, left, top);
+          ctx.font = `500 11px ${MONO}`;
+          ctx.fillStyle = '#94a3b8';
+          C2D.fillText(ctx, coarsePointer ? 'Press and hold the ring' : 'Press and hold the ring · Esc cancels', left, top + 18);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.press ? '#34d399' : '#94a3b8';
+          C2D.fillText(ctx, c.press ? 'holding…' : `${max(0, (c.deadline - now) / 1000).toFixed(1)} s`, right, top);
+
+          const railY = top + 32;
+          const frac = c.press ? 1 : max(0, min(1, (c.deadline - now) / RING_TIMEOUT_MS));
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+          C2D.fillRect(ctx, left, railY, right - left, 2);
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.55)';
+          C2D.fillRect(ctx, left, railY, (right - left) * frac, 2);
+
+          const pulse = reducedMotion ? 0.5 : (sin(now / 240) + 1) / 2;
+          if (!c.press) {
+            ctx.strokeStyle = `rgba(56, 189, 248, ${(0.4 * (1 - pulse)).toFixed(3)})`;
+            ctx.lineWidth = 1.5;
+            circle(ctx, c.x, c.y, c.r + 6 + 9 * pulse);
+            C2D.stroke(ctx);
+          }
+          C2D.save(ctx);
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.75)';
+          ctx.shadowBlur = 12 + 10 * pulse;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3;
+          circle(ctx, c.x, c.y, c.r);
+          C2D.stroke(ctx);
+          C2D.restore(ctx);
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+          circle(ctx, c.x, c.y, c.r - 4);
+          C2D.fill(ctx);
+
+          if (c.press) {
+            const p = min(1, (now - c.press.t) / c.need);
+            ctx.fillStyle = `rgba(52, 211, 153, ${(0.18 + 0.4 * p).toFixed(3)})`;
+            circle(ctx, c.x, c.y, max(0.5, (c.r - 4) * p));
+            C2D.fill(ctx);
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            C2D.beginPath(ctx);
+            C2D.arc(ctx, c.x, c.y, c.r + 7, -PI / 2, -PI / 2 + PI * 2 * p);
+            C2D.stroke(ctx);
+          }
+
+          ctx.textAlign = 'center';
+          ctx.font = `700 9px ${MONO}`;
+          ctx.fillStyle = '#e0f2fe';
+          C2D.fillText(ctx, 'HOLD', c.x, c.y + 0.5);
+
+          if (c.miss && now - c.miss.t < 600) {
+            const a = 1 - (now - c.miss.t) / 600;
+            ctx.strokeStyle = `rgba(248, 113, 113, ${a.toFixed(3)})`;
+            ctx.lineWidth = 2;
+            circle(ctx, c.miss.x, c.miss.y, 8 + 14 * (1 - a));
+            C2D.stroke(ctx);
+          }
+        } catch (_) {
+          cancelChallenge('Ring renderer failed — press the control again');
+          return;
+        }
+        c.frame = nextFrame(drawRing);
+      }
+
+      function closeChallenge() {
+        const c = challenge;
+        if (!c) return;
+        challenge = null;
+        if (c.frame) cancelFrame(c.frame);
+        if (c.press) {
+          try {
+            callRelease(ringLayer, c.press.id);
+          } catch (_) { /* capture already released */ }
+        }
+        try {
+          C2D.setTransform(ringCtx, 1, 0, 0, 1, 0, 0);
+          C2D.clearRect(ringCtx, 0, 0, ringLayer.width, ringLayer.height);
+        } catch (_) { /* nothing drawn yet */ }
+        putClass(ringLayer, 'ring-layer');
+      }
+
+      function cancelChallenge(reason) {
+        if (!challenge) return;
+        closeChallenge();
+        setChip('ring', '');
+        if (reason) notice('RING_CANCELLED', reason, reason, 'info');
+      }
+
+      function failChallenge(code, detail, chip) {
+        closeChallenge();
+        trailEpoch = perfNow();
+        block(code, detail, chip || 'ring', true);
+      }
+
+      function completeChallenge(now) {
+        const c = challenge;
+        const held = round(now - c.press.t);
+        const via = c.approach ? `${c.approach.pathLen} px approach` : `${c.press.type} press`;
+        closeChallenge();
+        trailEpoch = perfNow();
+        const result = runAction(c.kind);
+        setChip('trusted', 'pass');
+        setChip('live', 'pass');
+        setChip('path', 'pass');
+        setChip('ring', 'pass');
+        pass(c.label.toUpperCase(), `ring held ${held} ms · ${via}`, `${result} · ring held ${held} ms`);
+      }
+
+      function ringPoint(e) {
+        const rect = callRect(ringLayer);
+        return { x: read(e, 'clientX') - rect.left, y: read(e, 'clientY') - rect.top };
+      }
+
+      listen(ringLayer, 'pointerdown', (e) => {
+        e.preventDefault();
+        const c = challenge;
+        if (!c) return;
+        const verdict = screenEvent(e, ringLayer, 'pointerdown');
+        if (verdict) {
+          block(verdict.code, `ring ${verdict.detail}`, verdict.chip, false);
+          return;
+        }
+        if (c.press || read(e, 'button') !== 0) return;
+        const type = read(e, 'pointerType') || 'mouse';
+        const p = ringPoint(e);
+        const dist = hypot(p.x - c.x, p.y - c.y);
+        if (dist > c.r + RING_HIT_SLOP) {
+          c.misses += 1;
+          c.miss = { x: p.x, y: p.y, t: perfNow() };
+          if (c.misses === 1 && dist <= RING_NEAR_MISS) {
+            setStatus('warn', 'Just missed — press inside the ring');
+            return;
+          }
+          failChallenge('RING_MISS', `pressed ${round(dist)} px from the ring${c.misses > 1 ? ` (${c.misses} tries)` : ''}`);
+          return;
+        }
+        let approach = null;
+        if (type === 'mouse') {
+          approach = analyzeApproach(
+            { x: read(e, 'clientX'), y: read(e, 'clientY'), t: eventTime(e) },
+            c.startT,
+            { minPath: c.minPath, maxGap: 40, maxFinalStep: 120 }
+          );
+          if (!approach.ok) {
+            failChallenge(approach.code, `ring ${approach.detail}`, 'path');
+            return;
+          }
+        }
+        c.approach = approach;
+        c.press = { id: read(e, 'pointerId'), t: eventTime(e), type };
+        try {
+          callCapture(ringLayer, c.press.id);
+        } catch (_) { /* touch pointers are captured implicitly */ }
+        setStatus('info', 'Holding… keep the pointer inside the ring');
+      });
+
+      listen(ringLayer, 'pointermove', (e) => {
+        const c = challenge;
+        if (!c || !c.press || read(e, 'pointerId') !== c.press.id) return;
+        if (screenEvent(e, ringLayer, 'pointermove')) return;
+        const p = ringPoint(e);
+        if (hypot(p.x - c.x, p.y - c.y) > c.r + RING_HOLD_SLOP) {
+          try {
+            callRelease(ringLayer, c.press.id);
+          } catch (_) { /* already released */ }
+          c.press = null;
+          setStatus('warn', 'Slipped off the ring — press and hold again');
+        }
+      });
+
+      listen(ringLayer, 'pointerup', (e) => {
+        const c = challenge;
+        if (!c || !c.press || read(e, 'pointerId') !== c.press.id) return;
+        if (screenEvent(e, ringLayer, 'pointerup')) return;
+        const t = eventTime(e);
+        const held = t - c.press.t;
+        if (held >= c.need) {
+          completeChallenge(t);
+          return;
+        }
+        c.press = null;
+        setStatus('warn', `Released after ${round(held)} ms — hold until the ring fills`);
+      });
+
+      listen(ringLayer, 'pointercancel', (e) => {
+        const c = challenge;
+        if (c && c.press && read(e, 'pointerId') === c.press.id) c.press = null;
+      });
+
+      listen(ringLayer, 'contextmenu', (e) => e.preventDefault());
+
+      listen(window, 'pointerdown', (e) => {
+        if (!challenge || read(e, 'target') === ringLayer) return;
+        if (screenEvent(e, window, 'pointerdown')) return;
+        cancelChallenge('Cancelled — pressed outside the confirm area');
+      }, { capture: true });
+
+      listen(window, 'resize', () => {
+        if (challenge && document.documentElement.clientWidth !== challenge.vw) {
+          cancelChallenge('Cancelled — window resized');
+        }
+      });
+
+      listen(document, 'visibilitychange', () => {
+        if (document.hidden) cancelChallenge('Cancelled — tab hidden');
+      });
+
+      // Keyboard activation can't be told apart from a fake HID keyboard, so it's refused
+      // with a notice instead of being counted as an attack.
+      listen(window, 'keydown', (e) => {
+        const target = read(e, 'target');
+        const ours = target === toggleBtn || target === resetBtn || target === clearCheck;
+        if (!isTrusted(e)) {
+          if (ours) block('SYNTHETIC_EVENT', `keydown on #${target.id} with isTrusted=false`, 'trusted', false);
+          return;
+        }
+        const code = read(e, 'code');
+        const key = read(e, 'key');
+        if (challenge && key === 'Escape') {
           e.preventDefault();
-          flagSpoofAttempt('KEY_SYNTH_CLICK_BLOCKED', `Use physical pointer (${e.code})`, chipPath);
+          cancelChallenge('Cancelled with Esc');
+          return;
+        }
+        if ((target === toggleBtn || target === resetBtn) &&
+            (code === 'Enter' || code === 'NumpadEnter' || code === 'Space' || key === 'Enter' || key === ' ')) {
+          e.preventDefault();
+          notice('KEYBOARD_ACTIVATION', `${target === resetBtn ? 'Reset' : actionLabel('toggle')} via keyboard: a fake HID keyboard looks identical, so a pointer is required`,
+            'Keyboard can’t be verified — use a pointer');
         }
       }, { capture: true });
 
-      // Periodic runtime integrity check for monkey-patched globals or automation flags
-      rawSetInterval(() => {
-        const autoFlag = checkEnvironmentAutomation();
-        const timersNative =
-          isNativeFunction(window.setTimeout) &&
-          isNativeFunction(window.setInterval) &&
-          isNativeFunction(performance.now) &&
-          isNativeFunction(Date.now);
-
-        internalDomWrite = true;
-        try {
-          if (autoFlag) {
-            envIntegrityText.textContent = `Alert: ${autoFlag}`;
-            envIntegrityText.style.color = '#f87171';
-          } else if (!timersNative) {
-            envIntegrityText.textContent = 'Hook Detected (Using Vault)';
-            envIntegrityText.style.color = '#fbbf24';
-          } else {
-            envIntegrityText.textContent = 'Native Prototypes Intact';
-            envIntegrityText.style.color = '#34d399';
-          }
-        } finally {
-          internalDomWrite = false;
-        }
-      }, 2000);
-
-      // Bind hardened human-verified buttons
-      bindHardenedButton(
-        toggleBtn,
-        document.getElementById('toggleHoldFill'),
-        'Toggle',
-        () => {
-          if (count >= MAX_COUNT) {
-            resetCounter(true);
-          } else if (running) {
-            stopLoop();
-          } else {
-            startLoop();
-          }
-        }
-      );
-
-      bindHardenedButton(
-        resetBtn,
-        document.getElementById('resetHoldFill'),
-        'Reset',
-        () => {
-          resetCounter(true);
-        }
-      );
-
-      clearCheck.addEventListener('click', (e) => {
-        if (!checkEventTrusted(e) || e.detail === 0 || (e.clientX === 0 && e.clientY === 0)) {
+      // The console.clear() preference carries no security weight, so keyboard toggles are fine;
+      // only synthetic and replayed clicks are rejected.
+      listen(clearCheck, 'click', (e) => {
+        const verdict = screenEvent(e, clearCheck, 'click');
+        if (verdict) {
           e.preventDefault();
           clearCheck.checked = shouldClearConsole;
-          flagSpoofAttempt('UNTRUSTED_TOGGLE', 'clearCheck', chipTrusted);
+          block(verdict.code, `console.clear() toggle ${verdict.detail}`, verdict.chip, false);
           return;
         }
         shouldClearConsole = clearCheck.checked;
-        appendAuditLog(true, 'CONSOLE_CLEAR_TOGGLE', shouldClearConsole ? 'enabled' : 'disabled');
+        render();
+        pass('CONSOLE_CLEAR', shouldClearConsole ? 'clear before each log: on' : 'clear before each log: off', null);
       });
 
-      // Initial audit entry & start
-      appendAuditLog(true, 'SHIELD_INITIALIZED', `Seed ${hexSig(SESSION_SEED)}`);
-      startLoop();
+      bindControl(toggleBtn, $('toggleHoldFill'), 'toggle');
+      bindControl(resetBtn, $('resetHoldFill'), 'reset');
+
+      // =========================================================================
+      // 8. DOM WATCHDOG & ENVIRONMENT INTEGRITY
+      // =========================================================================
+      function verifyReadouts() {
+        let tampered = null;
+        guardText.forEach((text, el) => {
+          if (el.textContent !== text) {
+            tampered = tampered || el;
+            el.textContent = text;
+          }
+        });
+        guardStyle.forEach((s, el) => {
+          if (el.style[s.prop] !== s.value) {
+            tampered = tampered || el;
+            el.style[s.prop] = s.value;
+          }
+        });
+        guardClass.forEach((cls, el) => {
+          if (el.className !== cls) {
+            tampered = tampered || el;
+            el.className = cls;
+          }
+        });
+        if (!tampered) return;
+        block('DOM_TAMPER', `#${tampered.id || tampered.tagName.toLowerCase()} edited outside the app; restored`, 'dom', false);
+        if (domChipTimer !== null) cancelLater(domChipTimer);
+        domChipTimer = later(() => {
+          domChipTimer = null;
+          setChip('dom', 'pass');
+        }, 4000);
+      }
+
+      const watchOptions = { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'style'] };
+      try {
+        new CleanMutationObserver(verifyReadouts).observe(document.body, watchOptions);
+      } catch (_) {
+        new window.MutationObserver(verifyReadouts).observe(document.body, watchOptions);
+      }
+
+      function detectAutomation() {
+        try {
+          if (callWebdriver && callWebdriver(window.navigator) === true) return 'navigator.webdriver';
+        } catch (_) { /* a replaced navigator object shows up in the hook audit */ }
+        for (let i = 0; i < AUTOMATION_GLOBALS.length; i++) {
+          if (AUTOMATION_GLOBALS[i] in window) return AUTOMATION_GLOBALS[i];
+        }
+        try {
+          const names = getOwnNames(window).concat(getOwnNames(document));
+          for (let i = 0; i < names.length; i++) {
+            if (CDC_MARKER.test(names[i])) return `ChromeDriver marker ${names[i]}`;
+          }
+        } catch (_) { /* property enumeration blocked */ }
+        if (document.documentElement.getAttribute('webdriver') !== null) return 'webdriver attribute';
+        return null;
+      }
+
+      // Compares the page's (possibly hooked) clocks with the clean ones; a speed hack shows up
+      // as a ratio, while a system clock change moves both wall clocks equally and doesn't.
+      function checkPageClocks() {
+        if (!usingCleanRealm) return;
+        let pagePerf = NaN;
+        let pageDate = NaN;
+        try {
+          pagePerf = window.performance.now();
+        } catch (_) { /* reported as a hook below */ }
+        try {
+          pageDate = Date.now();
+        } catch (_) { /* reported as a hook below */ }
+        const sample = { perf: perfNow(), wall: dateNow(), pagePerf, pageDate };
+        const prev = clockSample;
+        clockSample = sample;
+        if (!prev) return;
+        const realMono = sample.perf - prev.perf;
+        const realWall = sample.wall - prev.wall;
+        if (!(realMono > 500)) return;
+        const tol = 40 + realMono * 0.02;
+        const perfErr = sample.pagePerf - prev.pagePerf - realMono;
+        const dateErr = sample.pageDate - prev.pageDate - realWall;
+        if (abs(perfErr) <= tol && abs(dateErr) <= tol) return;
+        const worst = abs(perfErr) >= abs(dateErr) ? (sample.pagePerf - prev.pagePerf) / realMono : (sample.pageDate - prev.pageDate) / realWall;
+        if (clockHookRatio === null) {
+          notice('PAGE_CLOCK_HOOK', `page clocks ran at ×${worst === worst ? worst.toFixed(2) : '?'} real time; counting uses clean clocks`,
+            'Page clock hook detected and ignored', 'warn');
+        }
+        clockHookRatio = worst;
+      }
+
+      function auditPageNatives() {
+        const found = new CleanArray();
+        const probe = (label, get, name) => {
+          let fn;
+          try {
+            fn = get();
+          } catch (_) {
+            found.push(label);
+            return;
+          }
+          if (!isNativeNamed(fn, name)) found.push(label);
+        };
+        probe('setTimeout', () => window.setTimeout, 'setTimeout');
+        probe('setInterval', () => window.setInterval, 'setInterval');
+        probe('requestAnimationFrame', () => window.requestAnimationFrame, 'requestAnimationFrame');
+        probe('performance.now', () => window.performance.now, 'now');
+        probe('Date.now', () => Date.now, 'now');
+        probe('addEventListener', () => EventTarget.prototype.addEventListener, 'addEventListener');
+        probe('dispatchEvent', () => EventTarget.prototype.dispatchEvent, 'dispatchEvent');
+        probe('Function.toString', () => Function.prototype.toString, 'toString');
+        probe('canvas.arc', () => CanvasRenderingContext2D.prototype.arc, 'arc');
+        probe('isTrusted', () => isTrustedGetterIn(window), 'isTrusted');
+        probe('navigator.webdriver', () => protoGetter(window, 'Navigator', 'webdriver'), 'webdriver');
+        if (clockHookRatio !== null) found.push(`clock ×${clockHookRatio === clockHookRatio ? clockHookRatio.toFixed(1) : '?'}`);
+        return found;
+      }
+
+      function integrityPass() {
+        const auto = detectAutomation();
+        if (auto && !automationReason) {
+          automationReason = auto;
+          cancelChallenge(null);
+          putClass(controlsZone, 'controls-zone locked');
+          block('AUTOMATION_FLAG', `${auto}: controls disabled for this session`, 'env', false, 'Automation detected — controls disabled');
+        }
+        checkPageClocks();
+        const hooks = auditPageNatives();
+        const report = hooks.join(', ');
+        if (report && report !== lastHookReport) {
+          notice('PAGE_HOOKS', `${report}: the shield uses clean-realm copies`);
+        }
+        lastHookReport = report;
+
+        if (automationReason) {
+          setChip('env', 'fail');
+          putClass(envIntegrityText, 'env-text bad');
+          putText(envIntegrityText, `Automation · ${automationReason}`);
+        } else if (vaultIssues.length) {
+          setChip('env', 'fail');
+          putClass(envIntegrityText, 'env-text bad');
+          putText(envIntegrityText, `Every realm hooked: ${vaultIssues[0]}${vaultIssues.length > 1 ? ` +${vaultIssues.length - 1}` : ''}`);
+        } else if (hooks.length) {
+          setChip('env', 'warn');
+          putClass(envIntegrityText, 'env-text warn');
+          putText(envIntegrityText, `Hooked: ${hooks[0]}${hooks.length > 1 ? ` +${hooks.length - 1}` : ''} · clean realm in use`);
+        } else if (!usingCleanRealm) {
+          setChip('env', 'warn');
+          putClass(envIntegrityText, 'env-text warn');
+          putText(envIntegrityText, 'No clean realm · page natives');
+        } else {
+          setChip('env', 'pass');
+          putClass(envIntegrityText, 'env-text ok');
+          putText(envIntegrityText, 'Clean realm · natives intact');
+        }
+        verifyReadouts();
+      }
+
+      function integrityLoop() {
+        integrityPass();
+        later(integrityLoop, 2000);
+      }
+
+      // =========================================================================
+      // 9. START
+      // =========================================================================
+      setChip('trusted', '');
+      setChip('live', '');
+      setChip('path', '');
+      setChip('ring', '');
+      setChip('dom', 'pass');
+      setStatus('idle', 'Awaiting pointer input');
+      putClass(controlsZone, 'controls-zone');
+      putClass(ringLayer, 'ring-layer');
+      putStyle($('toggleHoldFill'), 'width', '0%');
+      putStyle($('resetHoldFill'), 'width', '0%');
+      pass('SHIELD_READY', usingCleanRealm ? 'natives from a clean iframe realm' : 'iframe unavailable: page natives', null);
+      if (vaultIssues.length) {
+        notice('REALM_HOOKED', `${vaultIssues.join(', ')} patched in every frame before load: timing and input checks can't be trusted`,
+          'Every frame hooked — results can’t be trusted', 'bad');
+      }
+      render();
+      printTick(0);
+      integrityLoop();
+      resumeCounter();
     })();
   </script>
 </body>
