@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pulse 1000 — Precision Console Counter</title>
+  <title>Pulse 1000 — Hardened Precision Console Counter</title>
   <style>
     :root {
       --bg-0: #07090e;
       --bg-1: #0d111a;
-      --bg-card: rgba(17, 23, 36, 0.78);
+      --bg-card: rgba(17, 23, 36, 0.82);
       --bg-terminal: #090c12;
       --border: rgba(255, 255, 255, 0.08);
-      --border-highlight: rgba(99, 179, 237, 0.28);
+      --border-highlight: rgba(56, 189, 248, 0.28);
       --text-primary: #f3f6fc;
       --text-secondary: #94a3b8;
       --text-muted: #59677d;
@@ -19,6 +19,7 @@
       --accent-2: #818cf8;
       --success: #34d399;
       --warning: #fbbf24;
+      --danger: #f87171;
       --radius-lg: 20px;
       --radius-md: 12px;
       --radius-sm: 8px;
@@ -46,14 +47,15 @@
       justify-content: center;
       padding: 24px;
       -webkit-font-smoothing: antialiased;
+      user-select: none;
     }
 
     .shell {
       width: 100%;
-      max-width: 980px;
+      max-width: 1040px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
     /* Top Header */
@@ -77,8 +79,8 @@
     }
 
     .brand-icon {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
       border: 1px solid rgba(56, 189, 248, 0.35);
@@ -94,11 +96,35 @@
       font-size: 1rem;
       font-weight: 600;
       letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shield-tag {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .brand-subtitle {
       font-size: 0.78rem;
       color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .status-pill {
@@ -108,7 +134,7 @@
       padding: 6px 12px;
       border-radius: 999px;
       font-family: var(--mono);
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -128,6 +154,12 @@
       background: rgba(56, 189, 248, 0.12);
       color: var(--accent);
       border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .status-pill.alert {
+      background: rgba(248, 113, 113, 0.14);
+      color: var(--danger);
+      border-color: rgba(248, 113, 113, 0.4);
     }
 
     .status-dot {
@@ -152,11 +184,11 @@
     /* Main Grid */
     .grid {
       display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
+      grid-template-columns: 1.04fr 0.96fr;
       gap: 20px;
     }
 
-    @media (max-width: 840px) {
+    @media (max-width: 860px) {
       .grid {
         grid-template-columns: 1fr;
       }
@@ -166,20 +198,20 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 28px;
+      padding: 26px;
       backdrop-filter: blur(16px);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 24px;
+      gap: 20px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
     }
 
     /* Radial Counter Dial */
     .dial-wrap {
       position: relative;
-      width: 250px;
-      height: 250px;
+      width: 240px;
+      height: 240px;
       margin: 0 auto;
       display: grid;
       place-items: center;
@@ -216,11 +248,11 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      user-select: none;
+      pointer-events: none;
     }
 
     .count-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.16em;
       color: var(--text-muted);
@@ -231,7 +263,7 @@
     .count-value {
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 3.6rem;
+      font-size: 3.5rem;
       font-weight: 700;
       line-height: 1.05;
       letter-spacing: -0.04em;
@@ -248,23 +280,34 @@
     .count-target {
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-secondary);
       margin-top: 4px;
+    }
+
+    .chain-sig {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 8px;
     }
 
     /* Progress Bar & Milestones */
     .progress-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
 
     .progress-header {
       display: flex;
       justify-content: space-between;
       font-family: var(--mono);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-secondary);
     }
 
@@ -288,7 +331,7 @@
       display: flex;
       justify-content: space-between;
       font-family: var(--mono);
-      font-size: 0.7rem;
+      font-size: 0.69rem;
       color: var(--text-muted);
     }
 
@@ -300,19 +343,25 @@
     /* Stats Grid */
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
+    }
+
+    @media (max-width: 560px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .stat-box {
       background: rgba(255, 255, 255, 0.025);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 12px 14px;
+      padding: 11px 12px;
     }
 
     .stat-name {
-      font-size: 0.7rem;
+      font-size: 0.66rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--text-muted);
@@ -322,49 +371,70 @@
     .stat-val {
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 1rem;
+      font-size: 0.94rem;
       font-weight: 600;
       color: var(--text-primary);
     }
 
-    /* Controls */
-    .controls {
+    .stat-val.good { color: var(--success); }
+    .stat-val.bad { color: var(--danger); }
+
+    /* Biometric Controls Area */
+    .controls-zone {
+      position: relative;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .controls-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .controls-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    button, select {
+    button {
+      position: relative;
       font-family: var(--sans);
-      font-size: 0.84rem;
-      font-weight: 500;
+      font-size: 0.82rem;
+      font-weight: 600;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-primary);
-      padding: 9px 14px;
+      padding: 10px 16px;
       cursor: pointer;
-      transition: all 0.16s ease;
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
+      overflow: hidden;
     }
 
-    button:hover, select:hover {
+    button:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.18);
-    }
-
-    button:active {
-      transform: translateY(1px);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     .btn-primary {
       background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(129, 140, 248, 0.22));
       border-color: rgba(56, 189, 248, 0.45);
       color: #e0f2fe;
-      font-weight: 600;
     }
 
     .btn-primary:hover {
@@ -372,10 +442,15 @@
       border-color: var(--accent);
     }
 
-    select {
-      background-color: #121826;
-      font-family: var(--mono);
-      font-size: 0.78rem;
+    .hold-fill {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.05s linear;
+      pointer-events: none;
     }
 
     .toggle-label {
@@ -383,10 +458,9 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
       cursor: pointer;
-      user-select: none;
     }
 
     .toggle-label input {
@@ -396,7 +470,37 @@
       cursor: pointer;
     }
 
-    /* Right Panel: Live Console Mirror */
+    .hid-metrics-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: var(--mono);
+      font-size: 0.69rem;
+      color: var(--text-muted);
+    }
+
+    .hid-chip {
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .hid-chip.pass {
+      color: var(--success);
+      border-color: rgba(52, 211, 153, 0.28);
+      background: rgba(52, 211, 153, 0.07);
+    }
+
+    .hid-chip.fail {
+      color: var(--danger);
+      border-color: rgba(248, 113, 113, 0.35);
+      background: rgba(248, 113, 113, 0.1);
+    }
+
+    /* Right Panel: Live Console Mirror & Security Feed */
     .terminal-card {
       padding: 0;
       overflow: hidden;
@@ -458,31 +562,30 @@
 
     .terminal-body {
       flex: 1;
-      padding: 22px;
+      padding: 20px;
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 0.84rem;
-      line-height: 1.65;
+      font-size: 0.82rem;
+      line-height: 1.6;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 18px;
-      min-height: 360px;
+      gap: 14px;
     }
 
     .console-frame {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .console-cmd {
       color: var(--text-muted);
-      font-size: 0.76rem;
+      font-size: 0.74rem;
     }
 
     .console-cmd span {
@@ -490,7 +593,7 @@
     }
 
     .console-output-number {
-      font-size: 2rem;
+      font-size: 1.9rem;
       font-weight: 700;
       color: var(--accent);
       letter-spacing: -0.02em;
@@ -498,26 +601,78 @@
 
     .console-ascii-bar {
       color: var(--success);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       word-break: break-all;
     }
 
     .console-meta {
       color: var(--text-secondary);
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 12px;
+    }
+
+    /* Security Guard Log */
+    .security-panel {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 13px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .security-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .audit-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 135px;
+      overflow-y: auto;
+      font-size: 0.72rem;
+    }
+
+    .audit-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-secondary);
+    }
+
+    .audit-item.ok {
+      border-left: 2px solid var(--success);
+    }
+
+    .audit-item.blocked {
+      border-left: 2px solid var(--danger);
+      background: rgba(248, 113, 113, 0.08);
+      color: #fca5a5;
     }
 
     .code-snippet {
       background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 14px 16px;
-      font-size: 0.75rem;
+      padding: 12px 15px;
+      font-size: 0.72rem;
       color: var(--text-secondary);
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
     .code-snippet .kw { color: #c084fc; }
@@ -527,13 +682,13 @@
 
     .footer-hint {
       text-align: center;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
     }
 
     kbd {
       font-family: var(--mono);
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 5px;
       background: rgba(255, 255, 255, 0.06);
@@ -548,18 +703,23 @@
       <div class="brand">
         <div class="brand-icon">1K</div>
         <div>
-          <h1 class="brand-title">Pulse 1000 — Console Counter</h1>
-          <p class="brand-subtitle">Clears and prints to the browser console every second up to 1,000</p>
+          <h1 class="brand-title">
+            Pulse 1000 — Console Counter
+            <span id="shieldBadge" class="shield-tag">Anti-Spoof &amp; Anti-HID Active</span>
+          </h1>
+          <p class="brand-subtitle">Hardware-clock anchored 1,000s console counter with Fake-HID &amp; synthetic click rejection</p>
         </div>
       </div>
-      <div id="statusPill" class="status-pill">
-        <span class="status-dot"></span>
-        <span id="statusText">Running · 1/sec</span>
+      <div class="topbar-right">
+        <div id="statusPill" class="status-pill">
+          <span class="status-dot"></span>
+          <span id="statusText">Running · 1/sec Locked</span>
+        </div>
       </div>
     </header>
 
     <section class="grid">
-      <!-- Left: Counter & Controls -->
+      <!-- Left: Counter & Hardened Controls -->
       <div class="card">
         <div class="dial-wrap">
           <svg class="dial-svg" viewBox="0 0 250 250" aria-hidden="true">
@@ -573,9 +733,10 @@
             <circle id="dialProgress" class="dial-progress" cx="125" cy="125" r="110" />
           </svg>
           <div class="dial-center">
-            <span class="count-label">Current Count</span>
+            <span class="count-label">Verified Count</span>
             <div id="countDisplay" class="count-value" aria-live="polite">0</div>
             <div class="count-target">/ 1,000</div>
+            <div id="chainSig" class="chain-sig">SIG: 0x811C9DC5</div>
           </div>
         </div>
 
@@ -606,30 +767,45 @@
             <div id="etaVal" class="stat-val">16:40</div>
           </div>
           <div class="stat-box">
-            <div class="stat-name">Cadence</div>
-            <div id="cadenceVal" class="stat-val">1000 ms</div>
+            <div class="stat-name">Clock Drift</div>
+            <div id="driftVal" class="stat-val good">±0 ms</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-name">Spoofs Blocked</div>
+            <div id="blockedVal" class="stat-val good">0</div>
           </div>
         </div>
 
-        <div class="controls">
-          <button id="toggleBtn" class="btn-primary" type="button">Pause</button>
-          <button id="resetBtn" type="button">Reset</button>
-          <button id="stepBtn" type="button" title="Increment by 1">+1</button>
-          <button id="nearEndBtn" type="button" title="Jump to 995 to preview completion">Jump 995</button>
-          <select id="speedSelect" aria-label="Counter speed">
-            <option value="1000" selected>1× (1 / sec)</option>
-            <option value="200">5× (5 / sec)</option>
-            <option value="100">10× (10 / sec)</option>
-            <option value="20">50× (50 / sec)</option>
-          </select>
-          <label class="toggle-label" title="Call console.clear() before each console.log()">
-            <input id="clearCheck" type="checkbox" checked />
-            <span>console.clear()</span>
-          </label>
+        <div class="controls-zone">
+          <div class="controls-header">
+            <span>Human-Verified Controls (Physical Pointer Trajectory + Hold Required)</span>
+            <span id="lastClickTelemetry">Awaiting physical input</span>
+          </div>
+          <div id="controlsRow" class="controls-row">
+            <button id="toggleBtn" class="btn-primary" type="button">
+              <span id="toggleBtnLabel">Pause</span>
+              <span class="hold-fill" id="toggleHoldFill"></span>
+            </button>
+            <button id="resetBtn" type="button">
+              <span>Reset</span>
+              <span class="hold-fill" id="resetHoldFill"></span>
+            </button>
+            <label class="toggle-label" title="Call console.clear() before each console.log()">
+              <input id="clearCheck" type="checkbox" checked />
+              <span>console.clear()</span>
+            </label>
+          </div>
+          <div class="hid-metrics-bar">
+            <span id="chipTrusted" class="hid-chip pass">isTrusted: Verified</span>
+            <span id="chipPath" class="hid-chip pass">Trajectory: Ready</span>
+            <span id="chipHold" class="hid-chip pass">Hold Bio: 22–650ms</span>
+            <span id="chipEntropy" class="hid-chip pass">Anti-Macro: Armed</span>
+            <span id="chipDom" class="hid-chip pass">DOM Guard: Locked</span>
+          </div>
         </div>
       </div>
 
-      <!-- Right: Live DevTools Console Mirror -->
+      <!-- Right: Live DevTools Console Mirror & Security Audit Feed -->
       <div class="card terminal-card">
         <div class="terminal-bar">
           <div class="window-dots">
@@ -650,39 +826,112 @@
             <div id="consoleAsciiBar" class="console-ascii-bar">[░░░░░░░░░░░░░░░░░░░░░░░░░] 0.0%</div>
             <div class="console-meta">
               <span id="consoleTimestamp">Tick #0</span>
-              <span id="consoleStatusMsg">Waiting for first tick...</span>
+              <span id="consoleStatusMsg">Dual-clock monotonic lock active</span>
             </div>
           </div>
 
+          <div class="security-panel">
+            <div class="security-panel-header">
+              <span>Anti-Spoof &amp; Fake-HID Telemetry Log</span>
+              <span id="envIntegrityText" style="color: var(--success);">Native Prototypes Intact</span>
+            </div>
+            <ul id="auditList" class="audit-list"></ul>
+          </div>
+
           <div class="code-snippet">
-            <div class="cm">// Active Console Loop</div>
-            <div><span class="kw">const</span> MAX = <span class="num">1000</span>;</div>
-            <div><span class="kw">let</span> count = <span class="num">0</span>;</div>
-            <div><span class="kw">const</span> timer = <span class="fn">setInterval</span>(() =&gt; {</div>
-            <div>&nbsp;&nbsp;count++;</div>
-            <div>&nbsp;&nbsp;<span class="fn">console.clear</span>();</div>
-            <div>&nbsp;&nbsp;<span class="fn">console.log</span>(count);</div>
-            <div>&nbsp;&nbsp;<span class="kw">if</span> (count &gt;= MAX) <span class="fn">clearInterval</span>(timer);</div>
-            <div>}, <span id="snippetMs" class="num">1000</span>);</div>
+            <div class="cm">// Monotonic Hardware-Clock &amp; Anti-HID Guard</div>
+            <div><span class="kw">if</span> (!<span class="fn">verifyPhysicalPointer</span>(evt)) <span class="kw">return</span> <span class="fn">blockFakeHID</span>(evt);</div>
+            <div><span class="kw">if</span> (monoNow() - lastTickMono &lt; <span class="num">960</span>) <span class="kw">return</span> <span class="fn">blockTimeSpoof</span>();</div>
+            <div><span class="fn">rawClear</span>(); <span class="fn">rawLog</span>(count, chainDigest);</div>
           </div>
         </div>
       </div>
     </section>
 
     <footer class="footer-hint">
-      Open Browser DevTools (<kbd>F12</kbd> or <kbd>Ctrl+Shift+I</kbd> / <kbd>Cmd+Option+I</kbd>) to watch the live console · Shortcuts: <kbd>Space</kbd> Pause/Resume, <kbd>R</kbd> Reset
+      Open Browser DevTools (<kbd>F12</kbd> or <kbd>Ctrl+Shift+I</kbd> / <kbd>Cmd+Option+I</kbd>) · Synthetic <kbd>.click()</kbd>, <kbd>dispatchEvent</kbd>, linear HID mouse scripts, teleport clicks &amp; DOM edits are blocked
     </footer>
   </main>
 
   <script>
     (() => {
+      'use strict';
+
+      // =========================================================================
+      // 1. NATIVE PRIMITIVE VAULT (Captured before any console/userscript hooks)
+      // =========================================================================
+      const rawSetTimeout = window.setTimeout.bind(window);
+      const rawClearTimeout = window.clearTimeout.bind(window);
+      const rawSetInterval = window.setInterval.bind(window);
+      const rawPerfNow = performance.now.bind(performance);
+      const rawDateNow = Date.now.bind(Date);
+      const rawConsoleClear = console.clear.bind(console);
+      const rawConsoleLog = console.log.bind(console);
+      const rawConsoleWarn = console.warn.bind(console);
+      const rawMathAbs = Math.abs;
+      const rawMathHypot = Math.hypot;
+      const rawMathAtan2 = Math.atan2;
+      const rawMathRound = Math.round;
+      const rawMathFloor = Math.floor;
+      const rawMathMax = Math.max;
+      const rawMathMin = Math.min;
+      const rawMathSqrt = Math.sqrt;
+      const rawGetRandomValues = crypto.getRandomValues.bind(crypto);
+      const fnToString = Function.prototype.toString;
+      const hasOwn = Object.prototype.hasOwnProperty;
+
+      const trustedDescriptor = Object.getOwnPropertyDescriptor(Event.prototype, 'isTrusted');
+      const rawIsTrustedGetter = trustedDescriptor && trustedDescriptor.get
+        ? trustedDescriptor.get
+        : null;
+
+      // Freeze event prototypes to prevent post-load getter redefinition
+      try {
+        Object.freeze(Event.prototype);
+        if (window.PointerEvent) Object.freeze(PointerEvent.prototype);
+        if (window.MouseEvent) Object.freeze(MouseEvent.prototype);
+      } catch (_) {}
+
+      function isNativeFunction(fn) {
+        try {
+          return typeof fn === 'function' && fnToString.call(fn).includes('[native code]');
+        } catch (_) {
+          return false;
+        }
+      }
+
+      // =========================================================================
+      // 2. PRIVATE STATE & CRYPTOGRAPHIC TICK HASH CHAIN
+      // =========================================================================
       const MAX_COUNT = 1000;
-      const CIRCUMFERENCE = 2 * Math.PI * 110; // r = 110 -> ~691.15
+      const TICK_INTERVAL_MS = 1000;
+      const MIN_VALID_TICK_DELTA_MS = 950;
+      const CIRCUMFERENCE = 2 * Math.PI * 110;
+
+      const seedBuf = new Uint32Array(2);
+      rawGetRandomValues(seedBuf);
+      const SESSION_SEED = seedBuf[0] ^ 0x811c9dc5;
 
       let count = 0;
-      let intervalMs = 1000;
+      let chainHash = SESSION_SEED >>> 0;
       let running = true;
+      let shouldClearConsole = true;
       let timerId = null;
+      let lastTickPerf = rawPerfNow();
+      let lastTickWall = rawDateNow();
+      let nextExpectedPerf = lastTickPerf + TICK_INTERVAL_MS;
+      let lastMeasuredDriftMs = 0;
+      let blockedCount = 0;
+      let internalDomWrite = false;
+
+      // Rolling pointer trajectory & biometric click state
+      const pointerTrail = []; // { x, y, sx, sy, t, pointerType }
+      const MAX_TRAIL_LEN = 48;
+      let movesSinceLastClick = 0;
+      const activePresses = new WeakMap();
+      const hoverEnterTimes = new WeakMap();
+      const recentClickRecords = []; // { x, y, holdMs, timePerf, intervalMs }
+      let lastVerifiedClickPerf = 0;
 
       // DOM elements
       const countDisplay = document.getElementById('countDisplay');
@@ -692,14 +941,15 @@
       const remainingCountText = document.getElementById('remainingCountText');
       const elapsedVal = document.getElementById('elapsedVal');
       const etaVal = document.getElementById('etaVal');
-      const cadenceVal = document.getElementById('cadenceVal');
+      const driftVal = document.getElementById('driftVal');
+      const blockedVal = document.getElementById('blockedVal');
+      const chainSig = document.getElementById('chainSig');
       const statusPill = document.getElementById('statusPill');
       const statusText = document.getElementById('statusText');
+      const controlsRow = document.getElementById('controlsRow');
       const toggleBtn = document.getElementById('toggleBtn');
+      const toggleBtnLabel = document.getElementById('toggleBtnLabel');
       const resetBtn = document.getElementById('resetBtn');
-      const stepBtn = document.getElementById('stepBtn');
-      const nearEndBtn = document.getElementById('nearEndBtn');
-      const speedSelect = document.getElementById('speedSelect');
       const clearCheck = document.getElementById('clearCheck');
       const clearBadge = document.getElementById('clearBadge');
       const cmdArg = document.getElementById('cmdArg');
@@ -707,127 +957,646 @@
       const consoleAsciiBar = document.getElementById('consoleAsciiBar');
       const consoleTimestamp = document.getElementById('consoleTimestamp');
       const consoleStatusMsg = document.getElementById('consoleStatusMsg');
-      const snippetMs = document.getElementById('snippetMs');
+      const lastClickTelemetry = document.getElementById('lastClickTelemetry');
+      const chipTrusted = document.getElementById('chipTrusted');
+      const chipPath = document.getElementById('chipPath');
+      const chipHold = document.getElementById('chipHold');
+      const chipEntropy = document.getElementById('chipEntropy');
+      const chipDom = document.getElementById('chipDom');
+      const envIntegrityText = document.getElementById('envIntegrityText');
+      const auditList = document.getElementById('auditList');
       const milestones = document.querySelectorAll('.milestone');
 
+      // =========================================================================
+      // 3. HASH CHAIN & FORMATTING HELPERS
+      // =========================================================================
+      function stepFnv1a(prevHash, tickNum, deltaMs) {
+        let h = prevHash >>> 0;
+        const payload = `${tickNum}:${rawMathRound(deltaMs)}:${SESSION_SEED}`;
+        for (let i = 0; i < payload.length; i++) {
+          h ^= payload.charCodeAt(i);
+          h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return h >>> 0;
+      }
+
+      function hexSig(num) {
+        return '0x' + (num >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      }
+
       function formatTime(totalSeconds) {
-        const secs = Math.max(0, Math.ceil(totalSeconds));
-        const m = Math.floor(secs / 60);
+        const secs = rawMathMax(0, rawMathFloor(totalSeconds + 0.999));
+        const m = rawMathFloor(secs / 60);
         const s = secs % 60;
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       }
 
       function buildAsciiBar(ratio, length = 25) {
-        const filled = Math.round(ratio * length);
+        const filled = rawMathRound(ratio * length);
         return '[' + '█'.repeat(filled) + '░'.repeat(length - filled) + ']';
       }
 
-      function logToBrowserConsole(current) {
+      function appendAuditLog(ok, reason, detail) {
+        internalDomWrite = true;
+        try {
+          const li = document.createElement('li');
+          li.className = `audit-item ${ok ? 'ok' : 'blocked'}`;
+          const left = document.createElement('span');
+          left.textContent = `${ok ? 'PASS' : 'BLOCK'} · ${reason}`;
+          const right = document.createElement('span');
+          right.textContent = detail;
+          li.appendChild(left);
+          li.appendChild(right);
+          auditList.prepend(li);
+          while (auditList.children.length > 8) {
+            auditList.removeChild(auditList.lastElementChild);
+          }
+        } finally {
+          internalDomWrite = false;
+        }
+      }
+
+      function flagSpoofAttempt(code, detail, chipEl) {
+        blockedCount += 1;
+        internalDomWrite = true;
+        try {
+          blockedVal.textContent = String(blockedCount);
+          blockedVal.className = 'stat-val bad';
+          lastClickTelemetry.textContent = `Blocked: ${code}`;
+          lastClickTelemetry.style.color = '#f87171';
+          if (chipEl) {
+            chipEl.className = 'hid-chip fail';
+          }
+        } finally {
+          internalDomWrite = false;
+        }
+        appendAuditLog(false, code, detail);
+        rawConsoleWarn(`[SECURITY SHIELD] Blocked spoof/fake-HID attempt: ${code} (${detail})`);
+      }
+
+      // =========================================================================
+      // 4. ANTI-SPOOF & ANTI-FAKE-HID BIOMETRIC POINTER VERIFIER
+      // =========================================================================
+      function checkEventTrusted(evt) {
+        if (!evt || typeof evt !== 'object') return false;
+        // Reject shadowed `isTrusted` property on the event instance
+        if (hasOwn.call(evt, 'isTrusted')) return false;
+        if (!rawIsTrustedGetter) return false;
+        try {
+          return rawIsTrustedGetter.call(evt) === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function checkEnvironmentAutomation() {
+        if (navigator.webdriver === true) return 'WEBDRIVER_FLAG';
+        const suspiciousGlobals = [
+          '__webdriver_evaluate',
+          '__selenium_unwrapped',
+          '__fxdriver_evaluate',
+          '__driver_evaluate',
+          '_phantom',
+          'callPhantom',
+          'domAutomation',
+          'domAutomationController'
+        ];
+        for (let i = 0; i < suspiciousGlobals.length; i++) {
+          if (suspiciousGlobals[i] in window) return suspiciousGlobals[i];
+        }
+        return null;
+      }
+
+      // Record high-frequency pointer trail for trajectory & kinematics analysis
+      window.addEventListener('pointermove', (e) => {
+        if (!checkEventTrusted(e)) return;
+        const now = rawPerfNow();
+        const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+        const list = events && events.length ? events : [e];
+        for (let i = 0; i < list.length; i++) {
+          const pt = list[i];
+          pointerTrail.push({
+            x: pt.clientX,
+            y: pt.clientY,
+            sx: pt.screenX,
+            sy: pt.screenY,
+            t: now,
+            pointerType: e.pointerType || 'mouse'
+          });
+          movesSinceLastClick += 1;
+          if (pointerTrail.length > MAX_TRAIL_LEN) {
+            pointerTrail.shift();
+          }
+        }
+      }, { passive: true, capture: true });
+
+      function analyzePointerTrajectory(downEvent) {
+        const now = downEvent.tDown;
+        const recent = pointerTrail.filter((p) => now - p.t <= 3000 && now >= p.t);
+
+        // 1. Stationary Auto-Clicker / Zero-Move Between Clicks Check:
+        if (movesSinceLastClick < 3 || recent.length < 3) {
+          return { ok: false, code: 'TELEPORT_OR_STATIONARY_HID', detail: `${movesSinceLastClick} moves` };
+        }
+
+        // Compute total path length, net displacement, speeds, step deltas, and angular variance
+        let pathLen = 0;
+        const speeds = [];
+        const stepSignatures = [];
+
+        for (let i = 1; i < recent.length; i++) {
+          const dx = recent[i].x - recent[i - 1].x;
+          const dy = recent[i].y - recent[i - 1].y;
+          const dt = rawMathMax(0.5, recent[i].t - recent[i - 1].t);
+          const dist = rawMathHypot(dx, dy);
+          if (dist > 0.05) {
+            pathLen += dist;
+            speeds.push(dist / dt);
+            stepSignatures.push(`${rawMathRound(dx * 2)},${rawMathRound(dy * 2)}`);
+          }
+        }
+
+        const first = recent[0];
+        const last = recent[recent.length - 1];
+        const distToClick = rawMathHypot(downEvent.x - last.x, downEvent.y - last.y);
+
+        // If last recorded move was far away from the pointerdown point, cursor teleported
+        if (distToClick > 95) {
+          return { ok: false, code: 'CURSOR_TELEPORT_JUMP', detail: `jump ${rawMathRound(distToClick)}px` };
+        }
+
+        if (pathLen < 6) {
+          return { ok: false, code: 'ZERO_APPROACH_MOTION', detail: `path ${pathLen.toFixed(1)}px` };
+        }
+
+        // 2. Constant-Step Hardware HID Loop Check (e.g., Arduino Mouse.move(dx, dy) in a loop):
+        if (stepSignatures.length >= 6) {
+          const freq = Object.create(null);
+          let maxIdentical = 0;
+          for (let i = 0; i < stepSignatures.length; i++) {
+            const k = stepSignatures[i];
+            freq[k] = (freq[k] || 0) + 1;
+            if (freq[k] > maxIdentical) maxIdentical = freq[k];
+          }
+          if (maxIdentical / stepSignatures.length >= 0.78) {
+            return {
+              ok: false,
+              code: 'CONSTANT_STEP_HID',
+              detail: `${maxIdentical}/${stepSignatures.length} identical deltas`
+            };
+          }
+        }
+
+        // 3. Linear / Constant-Velocity Fake HID Check:
+        // Hardware/OS mouse scripts (PyAutoGUI, AHK, Arduino HID loops) move in collinear lines at constant speed
+        if (recent.length >= 8 && speeds.length >= 6) {
+          const netDx = last.x - first.x;
+          const netDy = last.y - first.y;
+          const netLen = rawMathHypot(netDx, netDy);
+
+          if (netLen > 25) {
+            // Max perpendicular distance of intermediate points from straight line
+            let maxPerpDev = 0;
+            for (let i = 1; i < recent.length - 1; i++) {
+              const area2 = rawMathAbs(
+                netDy * recent[i].x - netDx * recent[i].y + last.x * first.y - last.y * first.x
+              );
+              const perp = area2 / netLen;
+              if (perp > maxPerpDev) maxPerpDev = perp;
+            }
+
+            // Speed coefficient of variation
+            const meanSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+            const variance = speeds.reduce((acc, s) => acc + (s - meanSpeed) * (s - meanSpeed), 0) / speeds.length;
+            const speedCv = meanSpeed > 0 ? rawMathSqrt(variance) / meanSpeed : 0;
+
+            if (maxPerpDev < 0.08 && speedCv < 0.03) {
+              return {
+                ok: false,
+                code: 'LINEAR_HID_VECTOR',
+                detail: `dev ${maxPerpDev.toFixed(2)}px cv ${speedCv.toFixed(2)}`
+              };
+            }
+          }
+        }
+
+        return {
+          ok: true,
+          samples: recent.length,
+          pathLen: rawMathRound(pathLen)
+        };
+      }
+
+      function analyzeMacroEntropy(clickX, clickY, holdMs, nowPerf) {
+        // 1. Minimum human inter-click cooldown
+        if (lastVerifiedClickPerf > 0 && nowPerf - lastVerifiedClickPerf < 180) {
+          return { ok: false, code: 'RAPID_AUTOCLICKER', detail: `${rawMathRound(nowPerf - lastVerifiedClickPerf)}ms gap` };
+        }
+
+        // 2. Stationary coordinate repetition check (2+ consecutive clicks on exact same pixel)
+        if (recentClickRecords.length >= 1) {
+          const prev = recentClickRecords[recentClickRecords.length - 1];
+          const coordDelta = rawMathHypot(clickX - prev.x, clickY - prev.y);
+          if (coordDelta === 0 && recentClickRecords.length >= 2) {
+            const prev2 = recentClickRecords[recentClickRecords.length - 2];
+            if (rawMathHypot(clickX - prev2.x, clickY - prev2.y) === 0) {
+              return { ok: false, code: 'FIXED_COORD_HID_MACRO', detail: `0px variance (${clickX},${clickY})` };
+            }
+          }
+        }
+
+        // 3. Robotic cadence / constant hold duration check across last 4 clicks
+        if (recentClickRecords.length >= 3) {
+          const holds = recentClickRecords.slice(-3).map((r) => r.holdMs).concat(holdMs);
+          const meanHold = holds.reduce((a, b) => a + b, 0) / holds.length;
+          const holdVar = holds.reduce((acc, h) => acc + (h - meanHold) * (h - meanHold), 0) / holds.length;
+          const holdStd = rawMathSqrt(holdVar);
+
+          if (holdStd < 0.75) {
+            return { ok: false, code: 'ROBOTIC_HOLD_CADENCE', detail: `σ=${holdStd.toFixed(2)}ms` };
+          }
+
+          const intervals = recentClickRecords.slice(-2).map((r) => r.intervalMs).concat(nowPerf - lastVerifiedClickPerf);
+          const meanInt = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+          const intVar = intervals.reduce((acc, iv) => acc + (iv - meanInt) * (iv - meanInt), 0) / intervals.length;
+          const intStd = rawMathSqrt(intVar);
+
+          if (intStd < 2.0) {
+            return { ok: false, code: 'ROBOTIC_INTERVAL_MACRO', detail: `σ=${intStd.toFixed(2)}ms` };
+          }
+        }
+
+        return { ok: true };
+      }
+
+      // Subtle positional shift of controls after each verified click so stationary HID clickers miss
+      function applyAntiCampJitter() {
+        const randBuf = new Uint8Array(2);
+        rawGetRandomValues(randBuf);
+        const dx = 10 + (randBuf[0] % 22);
+        const dy = -4 + (randBuf[1] % 9);
+        internalDomWrite = true;
+        try {
+          controlsRow.style.transform = `translate(${dx}px, ${dy}px)`;
+        } finally {
+          internalDomWrite = false;
+        }
+      }
+
+      function bindHardenedButton(buttonEl, holdFillEl, actionName, onVerifiedAction) {
+        buttonEl.addEventListener('pointerenter', (e) => {
+          if (checkEventTrusted(e)) {
+            hoverEnterTimes.set(buttonEl, rawPerfNow());
+          }
+        });
+
+        buttonEl.addEventListener('pointerdown', (e) => {
+          if (!checkEventTrusted(e)) {
+            flagSpoofAttempt('UNTRUSTED_POINTERDOWN', actionName, chipTrusted);
+            return;
+          }
+          if (e.button !== 0) return;
+
+          const rect = buttonEl.getBoundingClientRect();
+          const insideBounds =
+            e.clientX >= rect.left - 1 &&
+            e.clientX <= rect.right + 1 &&
+            e.clientY >= rect.top - 1 &&
+            e.clientY <= rect.bottom + 1;
+
+          if (!insideBounds || (e.clientX === 0 && e.clientY === 0)) {
+            flagSpoofAttempt('ZERO_COORD_SYNTHETIC', actionName, chipTrusted);
+            return;
+          }
+
+          const now = rawPerfNow();
+          const enterTime = hoverEnterTimes.get(buttonEl) || 0;
+          const dwellMs = enterTime > 0 ? now - enterTime : 0;
+
+          const downRecord = {
+            tDown: now,
+            dwellMs,
+            x: e.clientX,
+            y: e.clientY,
+            sx: e.screenX,
+            sy: e.screenY,
+            pointerId: e.pointerId,
+            pointerType: e.pointerType
+          };
+          activePresses.set(buttonEl, downRecord);
+
+          internalDomWrite = true;
+          try {
+            holdFillEl.style.width = '100%';
+          } finally {
+            internalDomWrite = false;
+          }
+        });
+
+        buttonEl.addEventListener('pointerup', (e) => {
+          internalDomWrite = true;
+          try {
+            holdFillEl.style.width = '0%';
+          } finally {
+            internalDomWrite = false;
+          }
+
+          if (!checkEventTrusted(e)) {
+            activePresses.delete(buttonEl);
+            flagSpoofAttempt('UNTRUSTED_POINTERUP', actionName, chipTrusted);
+            return;
+          }
+
+          const downRecord = activePresses.get(buttonEl);
+          if (!downRecord) {
+            flagSpoofAttempt('ORPHAN_POINTERUP', actionName, chipHold);
+            return;
+          }
+          downRecord.tUp = rawPerfNow();
+          downRecord.upX = e.clientX;
+          downRecord.upY = e.clientY;
+        });
+
+        buttonEl.addEventListener('pointercancel', () => {
+          activePresses.delete(buttonEl);
+          internalDomWrite = true;
+          try {
+            holdFillEl.style.width = '0%';
+          } finally {
+            internalDomWrite = false;
+          }
+        });
+
+        // Intercept click: blocks element.click(), dispatchEvent(), keyboard Enter/Space synthetic click, and fake HID
+        buttonEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+
+          // Check 1: Native Event.prototype.isTrusted
+          if (!checkEventTrusted(e)) {
+            flagSpoofAttempt('SYNTHETIC_JS_CLICK', `${actionName} (!isTrusted)`, chipTrusted);
+            return;
+          }
+
+          // Check 2: Reject detail === 0 or (0,0) coordinates (programmatic / keyboard synthetic button activation)
+          if (e.detail === 0 || (e.clientX === 0 && e.clientY === 0)) {
+            flagSpoofAttempt('SYNTHETIC_DETAIL_ZERO', `${actionName} (no pointer)`, chipTrusted);
+            return;
+          }
+
+          // Check 3: Must have matching physical pointerdown -> pointerup lifecycle
+          const press = activePresses.get(buttonEl);
+          activePresses.delete(buttonEl);
+
+          if (!press || typeof press.tUp !== 'number') {
+            flagSpoofAttempt('BYPASSED_POINTER_PHASE', actionName, chipHold);
+            return;
+          }
+
+          const nowPerf = rawPerfNow();
+          const holdMs = press.tUp - press.tDown;
+
+          // Check 3b: Hover-to-press dwell check (blocks SetCursorPos + instant click in same frame < 8ms)
+          if (press.dwellMs < 8) {
+            flagSpoofAttempt('TELEPORT_ZERO_DWELL', `${press.dwellMs.toFixed(1)}ms hover dwell`, chipPath);
+            return;
+          }
+
+          // Check 4: Biometric switch hold duration (blocks 0–16ms instant HID macro taps & stuck >2500ms macros)
+          if (holdMs < 16 || holdMs > 2500) {
+            flagSpoofAttempt('INVALID_HOLD_BIOMETRIC', `${holdMs.toFixed(1)}ms hold`, chipHold);
+            return;
+          }
+
+          // Check 5: Pointer approach kinematics (blocks teleport clickers & linear constant-speed HID scripts)
+          const traj = analyzePointerTrajectory(press);
+          if (!traj.ok) {
+            flagSpoofAttempt(traj.code, traj.detail, chipPath);
+            return;
+          }
+
+          // Check 6: Coordinate & cadence entropy (blocks stationary auto-clickers & fixed-interval macros)
+          const entropy = analyzeMacroEntropy(e.clientX, e.clientY, holdMs, nowPerf);
+          if (!entropy.ok) {
+            flagSpoofAttempt(entropy.code, entropy.detail, chipEntropy);
+            return;
+          }
+
+          // Record verified human click
+          const intervalMs = lastVerifiedClickPerf > 0 ? nowPerf - lastVerifiedClickPerf : 0;
+          lastVerifiedClickPerf = nowPerf;
+          movesSinceLastClick = 0;
+          recentClickRecords.push({
+            x: e.clientX,
+            y: e.clientY,
+            holdMs,
+            timePerf: nowPerf,
+            intervalMs
+          });
+          if (recentClickRecords.length > 10) recentClickRecords.shift();
+
+          // Clear pointer trail after consumption so next click requires genuine movement
+          pointerTrail.length = 0;
+
+          internalDomWrite = true;
+          try {
+            chipTrusted.className = 'hid-chip pass';
+            chipPath.className = 'hid-chip pass';
+            chipHold.className = 'hid-chip pass';
+            chipEntropy.className = 'hid-chip pass';
+            lastClickTelemetry.textContent = `Verified: ${rawMathRound(holdMs)}ms hold · ${traj.samples} pts`;
+            lastClickTelemetry.style.color = '#34d399';
+          } finally {
+            internalDomWrite = false;
+          }
+
+          appendAuditLog(true, `HUMAN_${actionName.toUpperCase()}`, `hold ${rawMathRound(holdMs)}ms · path ${traj.pathLen}px`);
+          applyAntiCampJitter();
+          onVerifiedAction();
+        });
+      }
+
+      // =========================================================================
+      // 5. CONSOLE OUTPUT & UI RENDERING
+      // =========================================================================
+      function logToBrowserConsole(current, sigHex, driftMs) {
         const ratio = current / MAX_COUNT;
         const pct = (ratio * 100).toFixed(1);
         const bar = buildAsciiBar(ratio, 25);
 
-        if (clearCheck.checked) {
-          console.clear();
-          clearBadge.classList.add('active');
-          setTimeout(() => clearBadge.classList.remove('active'), Math.min(220, intervalMs * 0.6));
+        if (shouldClearConsole) {
+          rawConsoleClear();
+          internalDomWrite = true;
+          try {
+            clearBadge.classList.add('active');
+          } finally {
+            internalDomWrite = false;
+          }
+          rawSetTimeout(() => {
+            internalDomWrite = true;
+            try {
+              clearBadge.classList.remove('active');
+            } finally {
+              internalDomWrite = false;
+            }
+          }, 220);
         }
 
-        // Clean primary count output + styled progress line in DevTools console
-        console.log(
-          `%c${current}%c / ${MAX_COUNT}  %c${bar} ${pct}%`,
+        rawConsoleLog(
+          `%c${current}%c / ${MAX_COUNT}  %c${bar} ${pct}%  %cSIG:${sigHex} (Δ${driftMs >= 0 ? '+' : ''}${driftMs}ms)`,
           'color:#38bdf8;font-weight:700;font-size:16px;',
           'color:#94a3b8;font-size:13px;',
-          'color:#34d399;font-family:monospace;font-size:12px;'
+          'color:#34d399;font-family:monospace;font-size:12px;',
+          'color:#818cf8;font-family:monospace;font-size:11px;'
         );
 
         if (current >= MAX_COUNT) {
-          console.log(
-            '%cDone! Reached 1,000.',
+          rawConsoleLog(
+            `%cDone! Reached 1,000 · Final Chain Signature: ${sigHex}`,
             'color:#34d399;font-weight:700;font-size:13px;'
           );
         }
       }
 
       function renderUI() {
-        const ratio = count / MAX_COUNT;
-        const pct = (ratio * 100).toFixed(1);
-        const remainingTicks = MAX_COUNT - count;
-        const elapsedSeconds = (count * intervalMs) / 1000;
-        const remainingSeconds = (remainingTicks * intervalMs) / 1000;
+        internalDomWrite = true;
+        try {
+          const ratio = count / MAX_COUNT;
+          const pct = (ratio * 100).toFixed(1);
+          const remainingTicks = MAX_COUNT - count;
+          const elapsedSeconds = count;
+          const remainingSeconds = remainingTicks;
+          const sigHex = hexSig(chainHash);
 
-        // Dial & numbers
-        countDisplay.textContent = count.toLocaleString();
-        countDisplay.classList.add('tick-pop');
-        setTimeout(() => countDisplay.classList.remove('tick-pop'), 130);
+          countDisplay.textContent = count.toLocaleString();
+          clearCheck.checked = shouldClearConsole;
+          countDisplay.classList.add('tick-pop');
+          rawSetTimeout(() => {
+            internalDomWrite = true;
+            try {
+              countDisplay.classList.remove('tick-pop');
+            } finally {
+              internalDomWrite = false;
+            }
+          }, 130);
 
-        const offset = CIRCUMFERENCE * (1 - ratio);
-        dialProgress.style.strokeDashoffset = offset.toFixed(2);
-        linearFill.style.width = `${pct}%`;
+          const offset = CIRCUMFERENCE * (1 - ratio);
+          dialProgress.style.strokeDashoffset = offset.toFixed(2);
+          linearFill.style.width = `${pct}%`;
 
-        percentText.textContent = `${pct}% Complete`;
-        remainingCountText.textContent = `${remainingTicks.toLocaleString()} ${remainingTicks === 1 ? 'tick' : 'ticks'} left`;
+          percentText.textContent = `${pct}% Complete`;
+          remainingCountText.textContent = `${remainingTicks.toLocaleString()} ${remainingTicks === 1 ? 'tick' : 'ticks'} left`;
+          chainSig.textContent = `SIG: ${sigHex}`;
 
-        elapsedVal.textContent = formatTime(elapsedSeconds);
-        etaVal.textContent = formatTime(remainingSeconds);
-        cadenceVal.textContent = `${intervalMs} ms`;
-        snippetMs.textContent = String(intervalMs);
+          elapsedVal.textContent = formatTime(elapsedSeconds);
+          etaVal.textContent = formatTime(remainingSeconds);
+          driftVal.textContent = `${lastMeasuredDriftMs >= 0 ? '+' : ''}${lastMeasuredDriftMs} ms`;
+          driftVal.className = rawMathAbs(lastMeasuredDriftMs) <= 60 ? 'stat-val good' : 'stat-val bad';
 
-        // Milestones
-        milestones.forEach((el) => {
-          const m = Number(el.dataset.m);
-          el.classList.toggle('reached', count >= m);
-        });
+          milestones.forEach((el) => {
+            const m = Number(el.dataset.m);
+            el.classList.toggle('reached', count >= m);
+          });
 
-        // Terminal mirror
-        cmdArg.textContent = String(count);
-        consoleBigOut.textContent = `${count} / ${MAX_COUNT}`;
-        consoleAsciiBar.textContent = `${buildAsciiBar(ratio, 25)} ${pct}%`;
-        consoleTimestamp.textContent = `Tick #${count}`;
+          cmdArg.textContent = String(count);
+          consoleBigOut.textContent = `${count} / ${MAX_COUNT}`;
+          consoleAsciiBar.textContent = `${buildAsciiBar(ratio, 25)} ${pct}%`;
+          consoleTimestamp.textContent = `Tick #${count} · ${sigHex}`;
 
-        if (count >= MAX_COUNT) {
-          consoleStatusMsg.textContent = 'Completed — reached 1,000!';
-          statusPill.className = 'status-pill completed';
-          statusText.textContent = 'Completed · 1,000';
-          toggleBtn.textContent = 'Restart';
-        } else if (running) {
-          consoleStatusMsg.textContent = `Clearing & printing every ${intervalMs}ms`;
-          statusPill.className = 'status-pill';
-          const rateLabel = intervalMs === 1000 ? '1/sec' : `${Math.round(1000 / intervalMs)}/sec`;
-          statusText.textContent = `Running · ${rateLabel}`;
-          toggleBtn.textContent = 'Pause';
-        } else {
-          consoleStatusMsg.textContent = 'Paused';
-          statusPill.className = 'status-pill paused';
-          statusText.textContent = 'Paused';
-          toggleBtn.textContent = 'Resume';
+          if (count >= MAX_COUNT) {
+            consoleStatusMsg.textContent = 'Completed — 1,000 verified ticks!';
+            statusPill.className = 'status-pill completed';
+            statusText.textContent = 'Completed · 1,000';
+            toggleBtnLabel.textContent = 'Restart';
+          } else if (running) {
+            consoleStatusMsg.textContent = 'Clearing & printing every 1000ms (Hardware Locked)';
+            statusPill.className = 'status-pill';
+            statusText.textContent = 'Running · 1/sec Locked';
+            toggleBtnLabel.textContent = 'Pause';
+          } else {
+            consoleStatusMsg.textContent = 'Paused by verified user';
+            statusPill.className = 'status-pill paused';
+            statusText.textContent = 'Paused';
+            toggleBtnLabel.textContent = 'Resume';
+          }
+        } finally {
+          internalDomWrite = false;
         }
       }
 
-      function tick() {
-        if (count >= MAX_COUNT) {
-          stopLoop();
+      // =========================================================================
+      // 6. MONOTONIC DUAL-CLOCK DRIFT-COMPENSATED 1-SECOND ENGINE
+      // =========================================================================
+      function scheduleNextTick() {
+        if (!running || count >= MAX_COUNT) return;
+        const nowPerf = rawPerfNow();
+        const delay = rawMathMax(20, nextExpectedPerf - nowPerf);
+        timerId = rawSetTimeout(stepTick, delay);
+      }
+
+      function stepTick() {
+        if (!running || count >= MAX_COUNT) return;
+
+        const nowPerf = rawPerfNow();
+        const nowWall = rawDateNow();
+        const monoDelta = nowPerf - lastTickPerf;
+        const wallDelta = nowWall - lastTickWall;
+
+        // Guard against premature timer firing or time-warp injection
+        if (monoDelta < MIN_VALID_TICK_DELTA_MS) {
+          const remainingWait = rawMathMax(15, TICK_INTERVAL_MS - monoDelta);
+          timerId = rawSetTimeout(stepTick, remainingWait);
           return;
         }
+
+        // Cross-check wall clock vs monotonic clock to detect Date/Performance spoofing
+        const clockSkew = rawMathAbs(monoDelta - wallDelta);
+        if (clockSkew > 450) {
+          flagSpoofAttempt('CLOCK_SKEW_SPOOF', `Δmono=${rawMathRound(monoDelta)}ms Δwall=${wallDelta}ms`, null);
+          lastTickPerf = nowPerf;
+          lastTickWall = nowWall;
+          nextExpectedPerf = nowPerf + TICK_INTERVAL_MS;
+          scheduleNextTick();
+          return;
+        }
+
+        lastMeasuredDriftMs = rawMathRound(nowPerf - nextExpectedPerf);
+        lastTickPerf = nowPerf;
+        lastTickWall = nowWall;
+        nextExpectedPerf += TICK_INTERVAL_MS;
+        if (nowPerf - nextExpectedPerf > TICK_INTERVAL_MS) {
+          nextExpectedPerf = nowPerf + TICK_INTERVAL_MS;
+        }
+
         count += 1;
-        logToBrowserConsole(count);
+        chainHash = stepFnv1a(chainHash, count, monoDelta);
+
+        logToBrowserConsole(count, hexSig(chainHash), lastMeasuredDriftMs);
         renderUI();
 
         if (count >= MAX_COUNT) {
           stopLoop();
+          appendAuditLog(true, 'COMPLETED_1000', `final ${hexSig(chainHash)}`);
+        } else {
+          scheduleNextTick();
         }
       }
 
       function startLoop() {
-        stopLoop();
+        if (timerId !== null) {
+          rawClearTimeout(timerId);
+          timerId = null;
+        }
         running = true;
+        lastTickPerf = rawPerfNow();
+        lastTickWall = rawDateNow();
+        nextExpectedPerf = lastTickPerf + TICK_INTERVAL_MS;
         renderUI();
-        timerId = setInterval(tick, intervalMs);
+        scheduleNextTick();
       }
 
       function stopLoop() {
         if (timerId !== null) {
-          clearInterval(timerId);
+          rawClearTimeout(timerId);
           timerId = null;
         }
         running = false;
@@ -835,10 +1604,15 @@
       }
 
       function resetCounter(autoStart = true) {
-        stopLoop();
+        if (timerId !== null) {
+          rawClearTimeout(timerId);
+          timerId = null;
+        }
         count = 0;
-        if (clearCheck.checked) {
-          console.clear();
+        chainHash = SESSION_SEED >>> 0;
+        lastMeasuredDriftMs = 0;
+        if (shouldClearConsole) {
+          rawConsoleClear();
         }
         renderUI();
         if (autoStart) {
@@ -846,56 +1620,102 @@
         }
       }
 
-      // Event Listeners
-      toggleBtn.addEventListener('click', () => {
-        if (count >= MAX_COUNT) {
-          resetCounter(true);
-        } else if (running) {
-          stopLoop();
-        } else {
-          startLoop();
-        }
-      });
-
-      resetBtn.addEventListener('click', () => {
-        resetCounter(true);
-      });
-
-      stepBtn.addEventListener('click', () => {
-        if (count < MAX_COUNT) {
-          tick();
-        }
-      });
-
-      nearEndBtn.addEventListener('click', () => {
-        count = 995;
-        logToBrowserConsole(count);
-        renderUI();
-        if (!running) {
-          startLoop();
-        }
-      });
-
-      speedSelect.addEventListener('change', (e) => {
-        intervalMs = Number(e.target.value);
-        if (running) {
-          startLoop();
-        } else {
+      // =========================================================================
+      // 7. DOM TAMPER & PROTOTYPE INTEGRITY WATCHDOG
+      // =========================================================================
+      const domObserver = new MutationObserver(() => {
+        if (internalDomWrite) return;
+        const expectedText = count.toLocaleString();
+        if (countDisplay.textContent !== expectedText) {
+          flagSpoofAttempt('DOM_COUNT_TAMPER', `forced "${countDisplay.textContent}" -> "${expectedText}"`, chipDom);
           renderUI();
         }
       });
 
-      window.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-        if (e.code === 'Space') {
-          e.preventDefault();
-          toggleBtn.click();
-        } else if (e.key === 'r' || e.key === 'R') {
-          resetCounter(true);
-        }
+      domObserver.observe(countDisplay, {
+        childList: true,
+        characterData: true,
+        subtree: true
       });
 
-      // Kick off immediately on load
+      // Block global synthetic keyboard click triggers & untrusted events
+      window.addEventListener('keydown', (e) => {
+        if (!checkEventTrusted(e)) {
+          flagSpoofAttempt('UNTRUSTED_KEYDOWN', e.code || 'key', chipTrusted);
+          e.preventDefault();
+          return;
+        }
+        // Prevent holding Space/Enter on focused buttons from synthesizing detail===0 click events
+        if ((e.code === 'Space' || e.code === 'Enter') && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+          e.preventDefault();
+          flagSpoofAttempt('KEY_SYNTH_CLICK_BLOCKED', `Use physical pointer (${e.code})`, chipPath);
+        }
+      }, { capture: true });
+
+      // Periodic runtime integrity check for monkey-patched globals or automation flags
+      rawSetInterval(() => {
+        const autoFlag = checkEnvironmentAutomation();
+        const timersNative =
+          isNativeFunction(window.setTimeout) &&
+          isNativeFunction(window.setInterval) &&
+          isNativeFunction(performance.now) &&
+          isNativeFunction(Date.now);
+
+        internalDomWrite = true;
+        try {
+          if (autoFlag) {
+            envIntegrityText.textContent = `Alert: ${autoFlag}`;
+            envIntegrityText.style.color = '#f87171';
+          } else if (!timersNative) {
+            envIntegrityText.textContent = 'Hook Detected (Using Vault)';
+            envIntegrityText.style.color = '#fbbf24';
+          } else {
+            envIntegrityText.textContent = 'Native Prototypes Intact';
+            envIntegrityText.style.color = '#34d399';
+          }
+        } finally {
+          internalDomWrite = false;
+        }
+      }, 2000);
+
+      // Bind hardened human-verified buttons
+      bindHardenedButton(
+        toggleBtn,
+        document.getElementById('toggleHoldFill'),
+        'Toggle',
+        () => {
+          if (count >= MAX_COUNT) {
+            resetCounter(true);
+          } else if (running) {
+            stopLoop();
+          } else {
+            startLoop();
+          }
+        }
+      );
+
+      bindHardenedButton(
+        resetBtn,
+        document.getElementById('resetHoldFill'),
+        'Reset',
+        () => {
+          resetCounter(true);
+        }
+      );
+
+      clearCheck.addEventListener('click', (e) => {
+        if (!checkEventTrusted(e) || e.detail === 0 || (e.clientX === 0 && e.clientY === 0)) {
+          e.preventDefault();
+          clearCheck.checked = shouldClearConsole;
+          flagSpoofAttempt('UNTRUSTED_TOGGLE', 'clearCheck', chipTrusted);
+          return;
+        }
+        shouldClearConsole = clearCheck.checked;
+        appendAuditLog(true, 'CONSOLE_CLEAR_TOGGLE', shouldClearConsole ? 'enabled' : 'disabled');
+      });
+
+      // Initial audit entry & start
+      appendAuditLog(true, 'SHIELD_INITIALIZED', `Seed ${hexSig(SESSION_SEED)}`);
       startLoop();
     })();
   </script>
