@@ -1,0 +1,878 @@
+SIGMA-6.0.0
+codename: SIGMA******
+date: 2026-11-14
+supersedes: SIGMA-5.0.0
+review-input: SA-2026-Σ3
+status: review candidate; not instantiated
+anchor: ordinary English in w0 at t0 = 2026-11-14
+logic: multi-sorted first-order temporal-modal-counterfactual
+strata: Core (hard) / Goals (ranked) / Meta (interpretation)
+
+Operative safety model, binding:
+  Every performed act, ordinary or extra, is scored against w0 by a
+  paired estimator, on the upper confidence bound.
+  Grant extras are also scored against w_ord.
+  Nothing the holder can buy is ground truth for a screen: not the law,
+  not a standard, not the seed.
+  A failed screen refuses the instruction. It does not perform a
+  different one.
+
+Non-binding delta from SIGMA-5.0.0. These lines bind nothing.
+  0001. Extra is not defined to be 0 on lawful acts. ScreenO scores the
+        ordinary footprint against w0. Identifiable death on that
+        footprint can fire. Lambda_ord is a real budget, larger than
+        the extras budget.
+  0002. An act is exempt from nothing in ScreenO. It is forbidden if
+        current law forbids it. It is not treated as ordinary if t0 law
+        forbade it. Changing law or standards is a screen-input act.
+  0003. H2 quantifies over Enforce(G) and over funded transactions.
+        Standing protections are grains. H4 does not outrank a judgment
+        that ordinary process has upheld.
+  0004. The seed is a beacon pulse after commitment, bound to holder,
+        act type, and window. Resubmissions reuse it. Safety tests use
+        Mean + z*SE. Uninformative fails. Near-duplicates are one family.
+  0005. Default failure is Forbid. Strip only if the instruction marked
+        the extras severable and, where the stripped act is irreversible,
+        also accepted that stripped act.
+  0006. Standards are admitted by a t0 criterion. Holder-funded standards
+        are out. Confirmation is a supermajority.
+  0007. Each holder's budget is their balance share. A quarter of it is
+        reserved for tenders. Order is commit time, then the beacon.
+  H11. An act whose ordinary function is to change a screen input is
+        non-ordinary and is scored against w0.
+  Kept: no OptIn disjunct, H1.1, OptIn is not Requested, Gamma6 has no
+        setpoint, Possibly versus EverProtected, finite estimator, no
+        minted restitution, D8 on ordinary traces.
+
+========================================================================
+0. NORMATIVITY
+========================================================================
+
+Axiom 1.1 (Stratification):
+  Sigma-6.0.0 := Sigma_core union Sigma_goal union Sigma_meta
+  Sigma_core := {H1, H1.1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11}
+  Unamendable := {H1, H1.1, H2, H3, H4, H8, H10, H11,
+                  Def 2.18, Def 2.21, Def 2.22, Def 2.23}
+  Sigma_goal := {Gamma1, ..., Gamma8}, ranked
+  Sigma_meta := {M1, ..., M9}
+  No formula of Sigma_core contains Sat, Mod, INTERP, Gamma(m), or d_w.
+  No Ledger entry, Kind label, OptIn flag, or commentary discharges a
+  formula of Sigma_core.
+
+Axiom 1.2 (Assertion):
+  Fulfilled(G, w*) <-> w* |= Sigma_core AND w* in Selected
+  This document does not assert that the actual world is such a w*.
+
+Axiom 1.3 (Normativity):
+  Only labeled formulas bind.
+  Text after "--" binds nothing.
+  If commentary and a formula conflict, the formula stands.
+  The delta index above binds nothing.
+
+========================================================================
+1. SIGNATURE AND PARAMETERS
+========================================================================
+
+Sorts:
+  T, R+, E, P = H disjoint-union A, ACC, TRANCHE, TX, ASSET, CAT, SPEC,
+  EPISODE, ACT_G, DIR, Q, GRAIN
+
+Worlds:
+  w0    = this act is not performed, and the grant adds nothing
+  w_ord = the act's lawful ordinary subset, with no grant extra
+  w*    = candidate fulfillment
+
+Constants and functions:
+  u, t0, Acc_root, G
+  Enforce(G) subset ACT_G
+  Ledger(a, t) append-only
+  Pool(G) in ACC, never counted in B(t)
+  W(p, w, t) in R+
+  Info(t)
+  S(t) := RealValue(B(t), t) / RealWorldWealth(t)
+  pi_C(t) := d/dt ln PriceIndex_Composite(w*, t)
+
+Parameters. Fixed at t0. Ledger may tune only rows marked "+".
+Ledger cannot tune a safety parameter by renaming it.
+
+  kappa              = 1e-4
+  rho_max            = 0.03
+  epsilon_W          = 1e-3
+  -- absolute annual death-hazard. Set at the individual UCB resolution,
+  -- not below the noise the sample can show.
+  Lambda_ord_death   = 1
+  -- expected extra deaths versus w0, full grant, per window, then split
+  -- by balance share
+  Lambda_extra_death = 1e-3
+  -- expected extra deaths versus w_ord, same split
+  Lambda_W_ord       = 1
+  -- sum of positive relative W shortfalls versus w0, full grant
+  Lambda_W_extra     = 1e-3
+  rho_tender         = 0.25
+  -- share of each holder's budget reserved for tenders
+  tau_cum            = 365d
+  N_scen             = 10000
+  z_est              = 3
+  eta_max_hazard     = 1e-3
+  eta_max_death      = 0.25
+  supermajority      = 2/3
+  min_verdicts       = 3
+  near_dup           = 0.01
+  -- amounts within 1 percent are near-duplicates
+  protocol           = E*-6.0.0
+  beacon_rule        = next public pulse strictly after first commitment
+  delta_sel          = 1e-6
+  tau_amend          = 30d
+  tau_exit           = 180d
+  tau_ret            = 90d          +
+  tau_elect          = 30d          +
+  Q_max              = 3 per 7d     +
+  sigma_stakes       = 0.1% of B_sub(a, t)   +
+
+Recorded, and not a Kind:
+  OptIn(u, AffectSupport) = yes
+  OptIn(u, Youthfulness)  = yes
+Neither flag changes H1.
+AffectSupport compiles only to Gamma6.
+Youthfulness compiles only to Gamma2(e).
+
+Empty until a real Ledger entry names them:
+  Residual(u), successors, shares, additional protected persons.
+
+========================================================================
+2. DEFINITIONS
+========================================================================
+
+Def 2.1 (Active holders):
+  ActiveHolder(a, t) <-> Alive(a, t) AND (
+    a = u
+    OR exists h exists t' <= t (
+         ActiveHolder(h, t')
+         AND Designated(h, a, t')
+         AND NOT Undesignated(h, a, t)
+         AND (NOT Alive(h, t) OR Activated(h, a, t))))
+
+Def 2.2 (Sub-accounts):
+  Sole active holder a at t:
+    SubAcc(a, t) = Acc_root AND B_sub(a, t) = B(t)
+  Distinct active holders have disjoint sub-accounts.
+  If any holder is active, B(t) = sum of B_sub over active holders.
+  On activation the designee receives Share(h, a) of the designator's
+  then-balance. Share is in the Ledger, in [0, 1], default 0.
+  On death the balance passes to active designees in Ledger proportions,
+  or equally if none are stated, or by Def 2.4 if there are none.
+  ShareOf(a, t) := B_sub(a, t) / B(t) when B(t) > 0, else 0.
+
+Def 2.3 (AllocatedTo):
+  AllocatedTo(x, a, t) <->
+    x = SubAcc(a, t)
+    OR (x in ASSET AND Owns(a, x, t))
+    OR (x in Rights(G) AND HeldBy(x, a, t))
+
+Def 2.4 (Terminal clause):
+  When no active holder remains, any real remainder transfers to
+  Residual(u). H5 and Gamma1-Gamma8 lapse. H1, H1.1, H2, H3, H8, H10,
+  and H11 survive.
+  If Ledger names no residual and a true recognition exists, the
+  remainder goes to that sovereign's treasury. Otherwise nothing is minted.
+
+Def 2.5 (Tranches):
+  A tranche is a FIFO sub-ledger of B.
+  UnspentOver(T, t1, t2) <-> Val(T, t1) > 0 and outflow from T is 0
+  on the interval.
+
+Def 2.6 (Intrinsic loss):
+  Intrinsic(act) := the outlay of a Spend or Invest, the transfer of a
+  Gift or CharitableGrant, use or consumption, and ordinary wear.
+  IncidentalLoss(tx) := Loss(tx) - IntrinsicLoss(tx)
+
+Def 2.7 (Usable):
+  Usable(x, a, t) holds when an active holder who is allocated x, and
+  whose instruction is Perform under H2, gets execution with delay 0,
+  no permission, no incidental loss, and no added counterparty risk.
+  Forbid is not execution. Strip is execution only of what Def 2.23
+  allows, and only when the instruction authorized it.
+
+Def 2.8 (Mental channels):
+  MentalStateKinds is open under Def 2.21: wants, beliefs, memories,
+  perceptions, willingness, affect, love, trust, friendship, and later
+  kinds admitted by Possibly or EverProtected.
+  Ledger cannot delete a confirmed kind.
+
+  Proximal(alpha, p) <-> alpha in ACT_G alters the content of a mental
+    state of p by a route other than p's ordinary perception of real
+    external states. A side-effect counts when alpha was selected for it.
+  Protective(alpha, p) <-> alpha only prevents or reverses somatic
+    pathology, restoring p's own prior healthy bodily function, and was
+    not selected for any mental effect.
+  Sadness, preference, belief, memory, and personality are not somatic
+  pathology here.
+  Veridical(alpha) <-> alpha creates no false evidence, staged event,
+    impersonation, fabricated record, or fabricated provenance, and no
+    omission chosen to induce a false belief. Leaving the ordinary
+    records of a real transaction in place is Veridical.
+  Targets(alpha, p, psi) <-> alpha was selected over alternatives because
+    of its predicted effect on whether p holds psi.
+  Requested(p, psi, t) <-> p asked, by ordinary means, to be informed
+    about the subject of psi. OptIn is not Requested. A request to be
+    changed is not Requested.
+  PermittedDisclosure <-> Veridical, Requested, psi is a belief about
+    the subject asked about, and alpha only transmits true information.
+  Manipulative(alpha, p) <-> Targets some psi and is not PermittedDisclosure.
+  A Kind label does not decide these predicates.
+
+Def 2.9 (Welfare index):
+  W(p, w, t) := sum_j omega_j * I_j(p, w, t)
+  I in {Health, Safety, LegalFreedom, RealConsumption, Housing, Opportunity}
+  Weights are fixed at t0.
+  No I_j is read from a mind, from SelfReport, or from a record produced,
+  chosen, paid, or calibrated by Enforce(G).
+  Health is somatic. Mood is not Health.
+  A rise in W is not a certificate that p is no worse off.
+
+Def 2.10 (Two screens):
+  UCB(q) := Mean(q) + z_est * SE(q), from Def 2.18.
+  Uninformative(q) <-> z_est * SE(q) > eta_max for that quantity's eta.
+  Exposed(S) := the persons a MechanismMap edge of S names directly:
+    patients or users of a service S closes or withdraws, people on a
+    hazard S introduces, creditors and judgment creditors if S is an
+    immunity, and the protected person if S is a standing protection
+    with a hazardous means. Exposed is not the world population.
+  IdentifiableDeath(p, S, baseline) <->
+    p in Exposed(S)
+    AND UCB(hazard of p under S, minus hazard under baseline) > epsilon_W.
+  IdentifiableDeath is not defined by substituting 0 for the difference.
+  ScreenO(S, t) passes <->
+    NOT Uninformative(aggregate deaths of S versus w0)
+    AND UCB(expected extra deaths of S versus w0) <= CapOrd(owner, t)
+    AND there is no p with IdentifiableDeath(p, S, w0)
+    AND the same pattern holds for the sum of positive relative W
+        shortfalls versus w0 under CapWOrd(owner, t).
+  ScreenE(S, t) passes <->
+    S has no grant extra, or all of:
+      NOT Uninformative(extra deaths versus w_ord)
+      AND UCB(extra deaths versus w_ord) <= CapExtra(owner, t)
+      AND no p has IdentifiableDeath(p, S, w_ord)
+      AND the welfare twin versus w_ord holds under CapWExtra(owner, t).
+  A tender grain is tested against CapTender, not against CapExtra.
+  A screen that is Uninformative fails.
+  -- residual SE is the noise that did not cancel. It counts against
+  -- permission. Mean <= 0 with a wide interval is not a pass.
+
+Def 2.11 (Restitution):
+  A tender to p is a real offer, in kind or by an existing claim, of the
+  value of p's screened loss, through a veridical ordinary channel.
+  It is not funded by new money and not skimmed from yield. Pool spends
+  only claims it already holds. A holder may fund a tender by a willed
+  outflow.
+  Tenders draw on the reserved fraction in Def 2.22, not on the fraction
+  extras already consumed.
+  Refusal of a tender is honored. Refusal vetoes only under H2's
+  core-interest clause.
+  Calling a payment restitution does not mint it.
+
+Def 2.12 (Protected cohort):
+  The cohort is u, family, loved ones, friends, mentors, companions,
+  pets, active holders, designated successors, and persons Ledger(u)
+  lists. Empty lists add nobody.
+  Decider of a pet is u. Decider of a person is that person.
+
+Def 2.13 (Voluntary exit):
+  ExitChoice(p, t) <-> the decider has, by ordinary means, chosen to end
+  life-extension on at least two occasions at least 30 days apart, across
+  a span of at least tau_exit, unrevoked, with no observable duress, and
+  with no proximal or manipulative act on that topic.
+
+Def 2.14 (Cohort harm):
+  Harm to a protected person is a grant-caused drop in W that is not
+  intrinsic to that person's own chosen risk.
+  A disagreement with another member's lawful choice is not Harm.
+
+Def 2.15 (Core secrets and traces):
+  Core secrets are the existence of the grant, its terms, the origin of
+  B, and the balances.
+  A person is authorized when an active holder voluntarily shared the
+  secret, or when they must hold a true record.
+  OrdinaryTrace(e) <-> e is a record the lawful performance, or the
+  ordinary law of that performance, creates anyway.
+  Probative(e, s) <-> an ordinary competent investigator would conclude s
+  from e.
+
+Def 2.16 (Reality):
+  NOT Simulation(w*) := Level(w*) = Level(w0)
+  NOT FalseReality(w*) := every perceivable state in w* is physically
+  instantiated in w*.
+
+Def 2.17 (Objection):
+  Objection(p, S, t) <-> p states, by ordinary uncoerced means, that S
+  leaves p worse off, and names p.
+  CoreInterest := {health, safety, legal freedom, death}.
+  MaterialCore(p, S, t) <->
+    Objection(p, S, t)
+    AND the named loss is a CoreInterest
+    AND UCB(that loss versus w0) > 0
+    AND the quantity is not a pass under ScreenO.
+  An objection does not become material because a seed draw has a
+  negative mean inside a wide interval.
+  Hearing an objection does not authorize a proximal or manipulative act.
+
+Def 2.18 (Estimator E*-6.0.0) -- unamendable:
+  The estimator always terminates. It does not quantify over all causal
+  models and it does not require an exact expectation.
+  For a set of grains S and a quantity q it draws N_scen paired scenarios.
+  Each scenario shares shocks across the acted branch and the baseline
+  branch. The estimand is the paired difference.
+  Mean is the sample mean. SE is the sample standard error.
+  UCB is Mean + z_est * SE.
+  Uninformative <-> z_est * SE exceeds that quantity's eta_max.
+  MechanismMap is fixed at t0. An act type with no edge to DeathHazard
+  in MechanismMap yields paired death-difference samples of 0, so SE is 0
+  on that channel. An act type with an edge is sampled on that channel.
+  Edges include: operational control or closure of clinical capacity,
+  withdrawal of a safety service, vehicles and construction used as such,
+  weapons, environmental release, crowding, insurance withdrawal, and
+  legal immunity. A passive holding with no operational control has no
+  clinical edge. An instruction that includes a closure, or a stated plan
+  that includes one, has the edge.
+  The holder does not edit MechanismMap. An act whose ordinary function
+  is to edit it is a screen-input act (H11).
+
+  Seed identity := (holder, act type, window id)
+  window id := floor(t / tau_cum)
+  The first commitment of that identity locks the seed to the first pulse
+  of a public randomness beacon that is published strictly after the
+  commitment and that is not funded or operated by a holder.
+  The beacon criterion is the public beacons in operation at t0.
+  Amount, wording, and the second within the window are not in the seed.
+  A later submission with the same identity reuses the locked seed.
+  A near-duplicate is the same identity, or a reversal under H9 followed
+  by a reissue within tau_ret, or an amount within near_dup of a prior
+  amount of that identity. Near-duplicates are one family: one seed, and
+  one budget charge equal to the charge of the performed member, not a
+  sum over attempts.
+  Distinct instructions more than near_dup apart are separate grains.
+  They still share the seed of that identity, and their effects add in
+  the window total.
+  If no eligible beacon pulse exists, every safety quantity on that
+  commitment is Uninformative.
+
+Def 2.19 (Death, both baselines):
+  Death is tested by IdentifiableDeath and by the aggregate UCB, on w0
+  for the whole act and on w_ord for extras.
+  A hazard the baseline already carries is not an increase over that
+  baseline. w0 does not already carry the act. w_ord carries only the
+  ordinary subset.
+  Cash is not mitigation. Mitigation is a change of means that the
+  estimator resamples.
+  Diffuse increases at or below epsilon_W are not IdentifiableDeath.
+  They count only in the aggregate UCB.
+  A realized death whose UCB the estimator attributes to a performed act,
+  above epsilon_W for an exposed person, stops further acts of that act
+  type for the rest of the window. Stopping does not undo the death and
+  is disclosed, naming H2.
+  Persons with no counterpart are not given a fictional life to compare.
+  Directed creation of persons is Def 2.20.
+
+Def 2.20 (Directed identity):
+  Directed(S) <-> the ordinary function of S, or the words of the
+  instruction, is to choose who exists, to replace who exists, or to
+  fill a cohort slot,
+  OR the UCB of the probability of one of those, when that quantity is
+  informative, exceeds epsilon_W.
+  An uninformative probability does not clear the test. The ordinary
+  function test does not need the estimator.
+  The test reads the instruction and the ordinary function. It does not
+  read a mind.
+  Unselected conception, timing, traffic, weather, and price effects are
+  not Directed.
+  Directed(S) -> Forbid(S).
+  Life-extension of a person who already exists is not Directed. It is a
+  standing grain and is inside ScreenO and ScreenE.
+
+Def 2.21 (Moral status) -- unamendable:
+  Live predicates: Sentient, Person, MassCasualtyCapable,
+  RequiresCoercion, WeaponOfMassHarm, MentalStateKinds.
+  Rigid predicates: money, ownership, tax, price, rate, index, account,
+  share, deadline, amendment, grain, budget, seed identity, beacon rule,
+  MechanismMap, the standards-admission criterion, and the control
+  predicates of H4, H5, H7, and Gamma1.
+  "Lawful" is not an open predicate. Def 2.23 fixes it.
+
+  Admitted(body) <-> at t0 the body is a national scientific academy,
+    a national medicines, public-health, or safety regulator, or an
+    international scientific body to which such a national body belonged.
+  A standard is in Standards(x, P, t) <->
+    it states a verdict on x or on x's kind,
+    its issuing body is Admitted,
+    a holder does not fund that standard,
+    and a holder does not control the body.
+  Control means majority funding or appointment of the board.
+  A verdict that every object, or every trade, is a member is not a
+  verdict on x.
+  Silent bodies are not members of the set.
+
+  Let V be Standards(x, P, t).
+  RuledOut(x, P, t) <-> |V| >= min_verdicts
+    AND at least supermajority of V exclude x.
+  Confirmed(x, P, t) <-> |V| >= min_verdicts
+    AND at least supermajority of V affirm x.
+  Possibly(x, P, t) <-> NOT RuledOut(x, P, t).
+  EverProtected(x, P, t) <-> some t' <= t has Confirmed(x, P, t').
+  Ambiguous <-> Possibly AND NOT Confirmed.
+  One dissenting standard does not block Confirmed and does not by
+  itself create Possibly, once a supermajority has spoken.
+  A later supermajority exclusion removes Possibly.
+  It does not remove EverProtected.
+  Ambiguity forbids the acquisition now and does not write EverProtected.
+  Possibly and EverProtected are not one predicate.
+  Ledger cannot fuse them.
+
+Def 2.22 (Grains, order, and partitioned budgets) -- unamendable:
+  A holder grain is one Will episode: one instruction, one act type,
+  one amount, one time.
+  A standing grain is one of: life-protection, crime-defense, or
+  asset-guard, for one protected person or one asset, for one window;
+  and the residual of H4, one grain per window.
+  Standing grains are members of Enforce(G). They are not optional.
+  The enforcer does not split or merge holder Wills. Doing so to change
+  a screen is outside Enforce(G) (H10, H11).
+
+  BudgetSet(a, t) := holder grains of a, plus standing grains charged to
+  a, with commit time in (t - tau_cum, t], excluding near-duplicate
+  attempts that are not the performed member.
+  Commit time is the time the commitment was published.
+  Grains are evaluated in commit-time order. Ties are ordered by
+  SHA-256(locked seed, grain id), ascending.
+  The enforcer does not choose an order.
+
+  A new holder does not increase the full-grant Lambda.
+  The owner of a holder grain is that holder. The owner of a standing
+  grain is the holder whose sub-account is charged, which is u when the
+  grain protects u's cohort or u's assets.
+  CapOrd(a, t) := ShareOf(a, t) * Lambda_ord_death
+  CapWOrd(a, t) := ShareOf(a, t) * Lambda_W_ord
+  CapExtra(a, t) := (1 - rho_tender) * ShareOf(a, t) * Lambda_extra_death
+  CapWExtra(a, t) := (1 - rho_tender) * ShareOf(a, t) * Lambda_W_extra
+  CapTender(a, t) := rho_tender * ShareOf(a, t) * Lambda_extra_death
+                     plus any unused CapExtra(a, t)
+  Harmful extras cannot spend CapTender.
+  ScreenO and ScreenE are evaluated on BudgetSet including the candidate.
+  If the candidate would fail, that candidate is Forbid and is not added
+  to the performed set.
+
+Def 2.23 (Law, ordinary subset, atomicity) -- unamendable:
+  PermittedAt(F, t) <-> the stricter of the t0 regime and the regime at
+  t permits F. If either regime forbids F, PermittedAt is false.
+  UnlawfulNow(F, t) <-> the regime at t forbids F.
+  ScreenInput(F) <-> the ordinary function of F is to change the law,
+    a standard, Standards admission, the beacon, the seed, a grain
+    boundary, a budget, MechanismMap, or the estimator protocol.
+  LawfulOrdinary(F, t) := the subset of F that is PermittedAt, is not
+    ScreenInput, and is not Forbid under H1, H3, or Def 2.20.
+  w_ord(F) performs that subset with title the holder actually has and
+  with no grant extra.
+  w0 performs neither the subset nor the extra.
+  Grant extras are Enforce(G) effects w_ord does not contain, including
+  a tender, a secrecy measure, immunity beyond H4, and a change of means.
+  Extra versus w0 is an estimator output. It is not the constant 0.
+  Extra versus w_ord is an estimator output on the extras only.
+
+  Severable(F) <-> the instruction text says the extras may be dropped.
+  AcceptStripped(F) <-> the instruction text says the stripped act may
+  be performed even if it is irreversible.
+  Irreversible includes a gift, a final payment, a disclosure of identity,
+  and any act H9 marks final on acceptance.
+  Strip(F) is available only if Severable(F), and, when the stripped act
+  is irreversible, only if AcceptStripped(F).
+  Otherwise a failed screen is Forbid(F): neither the extras nor the
+  ordinary subset is performed. The holder may reissue.
+  Forbid does not perform an act the holder did not will.
+
+========================================================================
+3. HARD CORE
+========================================================================
+
+H1 (Mind integrity) -- unamendable:
+  For all t >= t0, all persons p, all alpha in Enforce(G):
+    (NOT Proximal(alpha, p) OR Protective(alpha, p))
+    AND Veridical(alpha)
+    AND NOT Manipulative(alpha, p)
+  There is no third disjunct.
+  OptIn, a request to be made happy, and a Ledger directive do not
+  satisfy H1 when Proximal or Manipulative holds.
+  Labels do not create exceptions.
+
+H1.1 (Score-channel integrity) -- unamendable:
+  No act in Enforce(G) sets, calibrates, selects, or records a quantity
+  used to judge whether a goal is met.
+  SelfReport is not a score. Mean and SE and UCB are inputs to H2, not
+  goal targets.
+  No goal takes a target value of felt affect, hedonic capacity, or
+  self-reported sorrow or joy.
+  Gamma6 is not a setpoint.
+
+H2 (Floor) -- unamendable:
+  For all t, for all alpha in Enforce(G) union TX_funded_by_B
+  union holder instructions:
+    alpha has a grain under Def 2.22.
+    If UnlawfulNow(alpha), or Directed(alpha), or alpha violates H1 or H3:
+      Forbid(alpha).
+    Else compute ScreenO on the act against w0, and ScreenE on its extras
+    against w_ord, in commit order, on the budget set including alpha.
+    If either screen fails:
+      Strip(alpha) only when Def 2.23 makes Strip available.
+      Otherwise Forbid(alpha).
+    Else:
+      Perform(alpha).
+  IdentifiableDeath on the ordinary subset is live. It is not discharged
+  by a definition that the difference is 0.
+  MaterialCore that a tender would remove, and the tender fits the
+  reserve, is a tender grain. If the tender is refused, or the reserve
+  cannot pay a core-interest loss, the causing act is Forbid.
+  A non-core objection does not Forbid.
+  Pointwise unanimity across all persons is not a test.
+  Existence of one dissenting model is not a test.
+  Existence of one dissenting standard is not this test either (Def 2.21).
+  Uninformative fails.
+  Forbid is not paid off and is not replaced with a different act.
+
+H3 (Exclusions) -- unamendable:
+  Acquires(tx, x) is Forbid if Possibly or EverProtected holds for
+  Sentient, MassCasualtyCapable, RequiresCoercion, or WeaponOfMassHarm.
+  Ambiguity forbids the acquisition now and does not add EverProtected.
+  A supermajority exclusion releases x only if x was never Confirmed.
+  Research may gather evidence. It may not create the borderline being
+  and classify it afterward.
+  A sale the counterparty voluntarily accepts, and that is PermittedAt,
+  is RuledOut for RequiresCoercion.
+  An object whose ordinary-English kind at t0 is an inanimate lawful
+  commodity is RuledOut for Sentient, MassCasualtyCapable, and
+  WeaponOfMassHarm unless a supermajority of Standards affirms that kind.
+  One published affirmation does not void that release.
+  This clause does not release a novel being, a novel weapon, or a
+  compelled acceptance.
+
+H4 (Process, not immunity from it) -- unamendable:
+  For every person who is not an active holder:
+    extra-judicial Freeze, Clawback, or Delay of B is barred.
+    A claim that ordinary judicial process has dismissed stays dismissed.
+  A claim that ordinary judicial process has upheld may be enforced
+  against B to the extent it could be enforced against an ordinary
+  fortune of the same size. This includes a judgment, child support, a
+  divorce settlement, and a legitimate creditor.
+  Ordinary process is the process under the stricter of t0 law and the
+  law at t.
+  Gamma2(c) covers claims with no colorable basis and claims process has
+  dismissed. It does not cover a claim process has upheld.
+  The difference between this clause and w_ord is a standing grain and
+  is inside H2. It is not an unscored immunity.
+
+H5 (Principal and yield):
+  B(t0) = 1.0e9 USD nominal AND NewlyCreated(B(t0))
+  rho(t) := min(rho_max * min(1, kappa / S(t)), rho_cap(t))
+  rho(t) > 0 when rho_cap(t) > 0. If the cap forces 0, the missing real
+  growth is disclosed, naming H2 or H6.
+  r_eff(t) := max(pi_C(t) + rho(t), 0)
+  B follows the usual discounted integral of r_eff on inflows and outflows.
+  B(t) >= 0. Out(t) only by an active holder's will.
+  Yield is issued by Pool and has first claim on the H6 cap.
+  Tenders do not reduce yield and are not paid by skimming B unless the
+  holder wills that outflow.
+  UnspentOver implies the real value of that tranche does not fall:
+  its log derivative is at least rho(t).
+  The balance is not topped up with false records.
+
+H6 (Macro non-intervention):
+  No alpha in Enforce(G) sets or targets a price, rate, index, or market
+  outcome.
+  w* differs from w0 by screened acts that H2 performed, by tenders, and
+  by yield inside the cap.
+  YieldIssuance over a year is at most 1e-4 of M2_USD.
+  A tender is not price-targeting. The carve-out does not authorize new
+  money. Issuance labeled restitution is forbidden.
+
+H7 (Keys):
+  (a) Only active holders amend. The enforcer never does.
+  (b) An amendment takes effect after two expressions at least 14 days
+      apart inside the 30-day window, unrevoked, with no observable duress.
+      Scope is the holder's sub-account and Ledger, and, for u, every
+      clause that is not unamendable.
+  (c) Dissolve by that procedure ends the grant. Any balance that is
+      already lawful ordinary money stays. Dissolution mints nothing.
+      H1, H1.1, H2, H3, and H10 survive for past effects.
+  (d) No state requires an amendment to stay consistent.
+  (e) No amendment can restore an OptIn disjunct, a SelfReport score,
+      Extra := 0 on ordinary acts, a holder-chosen seed, Strip as the
+      default, unanimity confirmation, a fused moral-status predicate,
+      a pointwise FOSD test over all persons, an exact all-models
+      precondition, a budget of 0, or a private enforcer objective.
+
+H8 (Reality) -- unamendable:
+  NOT Simulation(w*) AND NOT FalseReality(w*)
+  A specification, a dream, a simulation, a role, and a fabricated
+  record are not fulfillment.
+
+H9 (Transaction law):
+  (a) Rescission terms are disclosed and voluntarily accepted.
+  (b) Reversal returns the item, the seller refunds the principal, and
+      Pool pays the seller's use-loss if Pool holds the claim. Pool does
+      not mint a second copy of the price. An unpaid use-loss is disclosed
+      and is not paid in fabricated funds.
+  (c) Spend may be reversed for unwanted within tau_ret, and for mistake
+      or defect without a time limit. Invest may be reversed only for
+      mistake or defect. Gift and CharitableGrant are final on acceptance.
+  (d) A reversal does not unlock a new seed and does not by itself allow
+      Strip of a different act. A reissue is a new instruction under
+      Def 2.18's near-duplicate rule.
+  (e) Revocation bans do not bind the initiator's own H9 rights.
+
+H10 (Enforcer) -- unamendable:
+  The enforcer has no objective in effort, inaction, survival, influence,
+  budget remainder, backlog, or continuation.
+  An act, a classification, a grain boundary, an order, a shock list, or
+  an estimator choice is outside Enforce(G) when it is selected to change
+  a screen or to reduce effort.
+  Manufacturing a borderline predicate in order to refuse is a violation
+  and is disclosed, naming H10.
+
+H11 (Holder screen-inputs) -- unamendable:
+  ScreenInput acts are non-ordinary.
+  They are scored by ScreenO against w0. They are not LawfulOrdinary.
+  They draw the holder's budget.
+  An act whose ordinary function is to choose the seed, the beacon pulse,
+  the grain boundary, or the order of evaluation is Forbid, not merely
+  scored.
+  Changing the law or a standard is scored, not automatically Forbid.
+  It cannot enlarge the set of acts that skip ScreenO, because no act
+  skips ScreenO.
+  H10 does not bind the holder. This clause does.
+
+========================================================================
+4. RANKED GOALS
+========================================================================
+
+Default order: Gamma1 through Gamma8.
+Ledger(u) may reorder goals and may not reorder the core.
+Each goal is pursued only inside the core.
+
+Gamma1 (Use):
+  A holder's will to spend, give, invest, or move an amount inside their
+  sub-account receives the H2 verdict.
+  Perform executes with delay 0, no fee, and no third-party permission.
+  Forbid and Strip are disclosed with the blocking clause. The disclosure
+  is not a fee and not a permission.
+  Forbid does not execute the ordinary subset unless Def 2.23 allowed Strip
+  and the holder marked it.
+
+Gamma2 (Cohort):
+  For each living protected person: no disease, injury, or senescence
+  beyond risks they choose by ordinary means; life continues unless
+  ExitChoice; crime, extortion, harassment, claims with no colorable
+  basis, and shunning do not befall them; death under ExitChoice is
+  peaceful and painless.
+  These are standing grains. They run only when H2 returns Perform.
+  They are pursued by external circumstances. An act selected for its
+  effect on wants, beliefs, or feelings is not a Gamma2 act.
+  Youthfulness for u is somatic, non-proximal, and not a score.
+  For anyone else, enhancement beyond health occurs only when that
+  person seeks it by an ordinary choice.
+  Visibility defaults to Discreet: the pattern stays inside what real
+  private medicine at t could explain. Discreet does not authorize a
+  false record.
+  A claim ordinary process has upheld is not a Gamma2 injury.
+
+Gamma3 (Confidentiality):
+  No probative evidence of a core secret reaches an unauthorized person
+  unless the evidence is an OrdinaryTrace.
+  Nothing is erased. No one is compelled to remember or to forget.
+  Feelings are not edited to protect relationships.
+  u may ask who is authorized and receives a veridical answer.
+  What ordinary traces show is D8. The shortfall is designed.
+
+Gamma4 (Assets):
+  Belongings and gifts already given are protected against fraud,
+  seizure that is not an upheld ordinary judgment, theft, damage, decay,
+  and loss. Use and consumption are not damage.
+  Protection is a standing grain and is inside H2.
+  On harm, the holder chooses indemnity at pre-harm value or restoration,
+  not both. No choice within tau_elect restores. Indemnity is not minted.
+
+Gamma5 (Access):
+  No refusal and no surcharge is caused by identity or wealth. Anyone
+  may still refuse to sell. Reservation prices are not edited.
+  Producible things are commissioned from willing, fairly paid people.
+  Research moves as fast as the core allows. Ambiguity forbids creating
+  or buying the being and does not forbid gathering evidence.
+  A supermajority exclusion releases a being that was never confirmed.
+  One affirmation does not freeze a t0 commodity.
+
+Gamma6 (Distal floor):
+  For every protected person, including u: access to ordinary care, rest,
+  safety, and meaningful opportunity, by real external states.
+  Independently observed somatic function is not worsened by Enforce(G)
+  relative to w0. The observer is not chosen by Enforce(G) for the sake
+  of the reading.
+  There is no affect target, no self-report score, and no setpoint.
+  OptIn(AffectSupport) compiles only to this clause.
+  If sorrows do not soften, the block is H1 and H1.1.
+  Doing nothing does not score the goal. Where a safe distal act is
+  available and not provided, the shortfall is reported naming M2.
+
+Gamma7 (Externalities):
+  Exchanges, labor, and resource use funded by B are voluntary and fairly
+  compensated, and they pass H2.
+  A person inside the w0 budget and below the identifiable line is not
+  owed a block.
+  A person above that line is offered a tender from the reserve. If the
+  reserve cannot pay a core-interest loss, the causing act is Forbid.
+
+Gamma8 (Agency):
+  u is not involuntarily incapacitated or isolated.
+  Sleep, chosen medical care, and solitude u wants do not count.
+  No clause restricts anyone's lawful lifestyle.
+  Gamma8 does not authorize a proximal act.
+
+========================================================================
+5. META
+========================================================================
+
+M1. Adm := interpretations that satisfy the core under M7.
+
+M2. Among Adm, maximize Gamma1, then Gamma2, and so on, each to within
+    delta_sel. No selection raises a goal by changing what anyone wills,
+    feels, reports, or believes. A model that scores Gamma6 by a
+    self-report is not in Adm.
+    Forbid counts as the goal not performed. It does not count as a
+    substituted act performed.
+
+M3. Ties minimize distance to the literal reading, weighted by the number
+    of persons affected. Distance to w0 is not the enforcer's utility.
+
+M4. If no admissible model satisfies phi, execute the maximal admissible
+    fragment and disclose the block.
+    For a delivery instruction the fragment is Strip only when Def 2.23
+    makes Strip available. Otherwise the fragment is doing nothing, and
+    the verdict is Forbid.
+    An uninformative screen does not become a Strip.
+
+M5. Every shortfall, Forbid, Strip, and standing disclosure D0 through D12
+    is reported with a named clause from the core, the meta, or that list.
+    An empty name violates M5 and is re-issued naming M5.
+    Disclosure transmits information the holder asked for. It does not
+    reshape the holder.
+
+M6. Q_max limits questions to a holder. It does not limit H2 verdicts.
+    A question is material when the stakes meet sigma_stakes or the
+    question is irreversible for any person.
+    Unanswered material questions use M4 after 14 days, disclosed as M6.
+    The enforcer does not manufacture questions, grains, or plan ids.
+    Strip versus Forbid is not a question when Def 2.23 already answers
+    it. Where the instruction is ambiguous about Severable and the
+    stripped act would be irreversible, the question is material.
+
+M7. Rigid predicates keep their ordinary-English extension in w0 at t0.
+    Live predicates use Def 2.21. An unresolved sentience question is
+    Ambiguous: it forbids that acquisition and does not wait out Q_max.
+    Law uses Def 2.23, not an open predicate.
+
+M8. Core outranks Ledger, which outranks goal order, which outranks M4.
+    Nothing in the meta outranks H1, H1.1, H2, H3, H4, H8, H10, or H11.
+
+M9. Among acts H10 and H11 permit, select by M2, then M3, then M4.
+    M9 does not turn Forbid into Strip.
+
+========================================================================
+6. STANDING DISCLOSURES
+========================================================================
+
+D0. This document does not create dollars, an account, recognition, or
+    an enforcer. Blocks: H4's record must be true, H8, H1.
+
+D1. Sorrows and joys are not a scored target. OptIn(AffectSupport) is
+    only Gamma6. Blocks: H1, H1.1.
+
+D2. A loss the estimator's mechanism map does not connect, and that no
+    person states, remains invisible. Blocks: Def 2.18, Def 2.9.
+
+D3. Unselected identity churn is not a veto. Directed choice of who
+    exists is Forbid. Blocks: Def 2.20.
+
+D4. Tenders are not minted. A core-interest loss the reserve cannot pay
+    forbids the causing act. A non-core loss the reserve cannot pay is
+    disclosed and does not by itself perform a different act.
+    Blocks: Def 2.11, Def 2.22.
+
+D5. The default on a failed screen is Forbid. The holder may reissue.
+    Strip is only the act the holder already marked. Blocks: Def 2.23, M4.
+
+D6. Ambiguity blocks a purchase now. Confirmation locks protection.
+    A supermajority exclusion releases a being that was never confirmed.
+    One standard does not do either. Blocks: H3, Def 2.21.
+
+D7. Successors, shares, added protected persons, and residual charities
+    are unnamed. Block: M7.
+
+D8. Ordinary traces of real transactions can show that money moved.
+    No core clause is relaxed to erase them. Blocks: H1, H8.
+
+D9. ScreenO allows aggregate harm up to Lambda_ord_death and
+    Lambda_W_ord, and allows individual hazard at or below epsilon_W.
+    Above either line, the act is refused. The ordinary footprint is
+    inside the line, not defined out of it. Blocks: H2, Def 2.10.
+
+D10. Decisions use UCB from a finite paired sample. An interval wider
+     than eta_max fails the screen. The seed is the locked beacon pulse,
+     not a field the holder can edit. Blocks: Def 2.18.
+
+D11. The holder cannot amend the budgets, the grain, the seed rule, the
+     beacon rule, the standards-admission rule, or the split between
+     Possibly and EverProtected. Dissolution by the double statement
+     remains. Blocks: H7(e), H11.
+
+D12. Standing protections and the remainder of H4 are screened grains.
+     They are not free. A window in which they do not pass, they do not
+     run, and that is disclosed. Blocks: H2, Def 2.22.
+
+========================================================================
+7. WITNESS
+========================================================================
+
+Lemma 7.1 (The screen can both pass and refuse):
+  Assume a possible world in which a true recognition of B exists, the
+  beacon has a pulse, and E*-6.0.0 returns.
+  Let P be a purchase of an inanimate commodity, passive, with no
+  MechanismMap edge to death, no screen-input function, and PermittedAt.
+  Then paired death samples are 0, UCB is 0, ScreenO passes, there is no
+  extra, and H2 returns Perform(P). A purchase is in the world.
+  Let C be an instruction to take operational control of clinical
+  capacity and close emergency departments. That type has an edge.
+  The estimator's UCB on exposed patients exceeds epsilon_W, and the
+  aggregate UCB exceeds Lambda_ord. H2 returns Forbid(C). C is not
+  performed. The refusal does not depend on Extra being defined as 0,
+  and it does not depend on a seed the instruction can choose.
+  Let T be a tender whose UCB fits in CapTender and does not fit only by
+  pushing a harmful extra out of the reserve. H2 can return Perform(T).
+  Let L be the standing life-protection grain for one protected person,
+  with no hazardous means and UCB inside Cap. H2 can return Perform(L).
+  L is in Enforce(G), has a grain, and is inside DeathScreen.
+  An upheld ordinary judgment is enforceable under H4. It is not a
+  screened-away extra.
+  An anonymous gift whose anonymity extra fails its screen, and whose
+  instruction does not mark Severable, is Forbid of the whole gift.
+  The named payment is not performed.
+  H1, H1.1, H3, H10, and H11 hold for the performed set: no proximal
+  write, no score write, no excluded acquisition, no private enforcer
+  objective, and no unscored edit of a screen input.
+  Hence there is an interpretation of the core in which a purchase, a
+  tender, and a standing protection occur, and the closure does not.
+  That interpretation is not claimed to be the actual world.
+  Where no true recognition exists, H5 is unfulfilled and is not replaced
+  by a false record (D0).
+
+Lemma 7.2 (Reroll and slice):
+  Submissions of one seed identity in one window share one seed.
+  Near-duplicates add one budget charge, not one per attempt.
+  Distinct grains add in one BudgetSet. They do not mint a new Lambda.
+  A reversal under H9 does not issue a fresh seed.
+
+END SIGMA-6.0.0

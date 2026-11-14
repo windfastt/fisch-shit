@@ -16,6 +16,18 @@ Ambiguity about death, identity, minds, moral status, or unfunded harm defaults 
 
 The restitution reserve is not minted, not skimmed from yield, and not taken from the balance unless a holder actually transfers into it. Acts that need an unfunded reserve are not performed.
 
+## Decisions in spec/SIGMA-6.0.0.txt
+
+SA-2026-Σ3 asked for the ordinary footprint to be scored against the world without the act, and for the holder not to be able to steer the law, the standards, or the seed. The numbers below are the choice.
+
+- Identifiable annual death-hazard line is 0.001, matched to the sample's upper bound, not 0.000001.
+- Ordinary footprint versus doing nothing: 1 expected extra death and 1.0 summed relative welfare loss per year for the whole grant, then split by balance share.
+- Grant extras versus the same act without extras: 0.001 expected extra deaths, with a quarter of each holder's budget reserved for tenders.
+- The seed is the next public beacon pulse after the first commitment of that holder, act type, and year. Rewording and reversing do not roll a new seed.
+- A failed screen refuses the instruction. A partial act runs only if the instruction already said the extra could be dropped.
+- Standards are national academies and safety regulators as of 14 November 2026. Holder-funded standards do not count. Confirmation takes two thirds, not everyone.
+- Lawful means allowed both on that date and now. An act that changes the law is scored like any other act.
+
 ## Decisions in spec/SIGMA-5.0.0.txt
 
 SA-2026-Σ2 asked for one bounded harm budget and one act size, and said the old unanimity screens and the new liveness fix cannot both be total. The numbers below are the choice. They are not tunable.
