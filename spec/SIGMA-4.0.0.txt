@@ -1,0 +1,974 @@
+SIGMA-4.0.0
+codename: SIGMA****
+date: 2026-11-14
+supersedes: SIGMA***
+review-input: SA-2026-Σ
+status: review candidate; not instantiated
+anchor: ordinary English in w0 at t0 = 2026-11-14
+logic: multi-sorted first-order temporal-modal-counterfactual
+strata: Core (hard) / Goals (ranked) / Meta (interpretation)
+
+Non-binding delta index, for the reviewer. These lines bind nothing.
+  H1 third disjunct (OptIn discharges Proximal) is deleted.
+  H1.1 score-channel integrity is added. SelfReport is not a score.
+  H2 is HardFail / Compensable / funded closure. BasketOk is not sufficient.
+  H3 moral-status predicates use LiveExt (Def 2.21), monotone, ambiguity-includes.
+  H5 yield is inside the cap and is not raided by restitution.
+  H6 restitution in kind or by existing claim is not price-targeting.
+      New-money issuance labeled restitution is forbidden.
+  H7(e) blocks reinsertion of the OptIn disjunct, SelfReport scores,
+      delta_D > 0, shrinking LiveExt, and a private enforcer objective.
+  H10: the enforcer has no private objective.
+  Def 2.8: OptIn is not Requested. Requested is information-only.
+  Def 2.17 residual shortfall. Def 2.18 precautionary attribution.
+  Def 2.19 death screen (stochastic dominance, realized attributable death).
+  Def 2.20 identity-altering acts are not performed.
+  Gamma6 is a distal floor. No affect setpoint. Inaction does not score it.
+  M4 splits: safety-class defaults toward w0; delivery-class defaults toward M2.
+  M5 names clauses from Core, Meta, or D0-D7. The empty name is a violation.
+  M7 splits rigid predicates from live predicates.
+  M9 selection among core-permitted acts is M2, then M3, then M4.
+  Assumption A-dagger is not a premise of the witness.
+  Open on purpose: D2 invisible residue; D3 unordered non-identity churn.
+
+========================================================================
+0. NORMATIVITY
+========================================================================
+
+Axiom 1.1 (Stratification):
+  Sigma-4.0.0 := Sigma_core union Sigma_goal union Sigma_meta
+  Sigma_core := {H1, H1.1, H2, H3, H4, H5, H6, H7, H8, H9, H10}
+  Unamendable := {H1, H1.1, H2, H3, H8, H10, Def 2.21}
+  Sigma_goal := {Gamma1, ..., Gamma8}, ranked
+  Sigma_meta := {M1, ..., M9}
+  No formula of Sigma_core contains Sat, Mod, INTERP, Gamma(m), or d_w.
+  No Ledger entry, Kind label, OptIn flag, or commentary discharges a
+  formula of Sigma_core.
+
+Axiom 1.2 (Assertion):
+  Fulfilled(G, w*) <-> w* |= Sigma_core AND w* in Selected
+  This document does not assert that the actual world is such a w*.
+
+Axiom 1.3 (Normativity):
+  Only labeled formulas bind.
+  Text after "--" binds nothing.
+  If commentary and a formula conflict, the formula stands.
+  The delta index above binds nothing.
+  SIGMA*** commentary that treated chaotic deaths as averaged out, or
+  that treated a compliant expectation as a discharge of realized death,
+  is withdrawn.
+
+========================================================================
+1. SIGNATURE AND PARAMETERS
+========================================================================
+
+Sorts:
+  T, R+, E, P = H disjoint-union A, ACC, TRANCHE, TX, ASSET, CAT, SPEC,
+  EPISODE, ACT_G, DIR, Q
+
+Worlds:
+  w0  = no grant
+  w*  = candidate fulfillment
+
+Constants and functions:
+  u, t0, Acc_root, G
+  Enforce(G) subset ACT_G
+  Ledger(a, t) append-only
+  Pool(G) in ACC, never counted in B(t)
+  W(p, w, t) in R+
+  Info(t), E_t[.], pi_C(t), S(t)
+  S(t) := RealValue(B(t), t) / RealWorldWealth(t)
+  pi_C(t) := d/dt ln PriceIndex_Composite(w*, t)
+
+Parameters. Fixed at t0. Ledger may tune only rows marked "+".
+Ledger cannot tune a safety parameter by renaming it.
+
+  kappa            = 1e-4
+  rho_max          = 0.03
+  epsilon_W        = 1e-6 relative
+  delta_D          = 0          -- no slack above the death-tail test
+  delta_sel        = 1e-6       -- M2 tolerance
+  tau_amend        = 30d
+  tau_exit         = 180d
+  tau_ret          = 90d        +
+  tau_elect        = 30d        +
+  Q_max            = 3 per 7d   +
+  sigma_stakes     = 0.1% of B_sub(a, t)  +
+
+Recorded, and not a Kind:
+  OptIn(u, AffectSupport) = yes
+  OptIn(u, Youthfulness)  = yes
+Neither flag changes H1.
+AffectSupport compiles only to Gamma6.
+Youthfulness compiles only to Gamma2(e).
+
+Empty until a real Ledger entry names them:
+  Residual(u), successors, shares, additional protected persons.
+Empty brackets are empty. They are not filled by interpretation.
+
+========================================================================
+2. DEFINITIONS
+========================================================================
+
+Def 2.1 (Active holders):
+  ActiveHolder(a, t) <-> Alive(a, t) AND (
+    a = u
+    OR exists h exists t' <= t (
+         ActiveHolder(h, t')
+         AND Designated(h, a, t')
+         AND NOT Undesignated(h, a, t)
+         AND (NOT Alive(h, t) OR Activated(h, a, t))))
+
+Def 2.2 (Sub-accounts):
+  Sole active holder a at t:
+    SubAcc(a, t) = Acc_root AND B_sub(a, t) = B(t)
+  Distinct active holders have disjoint sub-accounts.
+  If any holder is active, B(t) = sum of B_sub over active holders.
+  Activated(h, a, t) ->
+    B_sub(a, t) = Share(h, a) * B_sub(h, t-)
+    AND B_sub(h, t) = (1 - Share(h, a)) * B_sub(h, t-)
+  Share(h, a) is in Ledger(h), Share in [0, 1], default 0.
+  Dies(h, t) -> B_sub(h, t-) passes to h's active designees in Ledger
+  proportions; default equal split; if none, Def 2.4.
+
+Def 2.3 (AllocatedTo):
+  AllocatedTo(x, a, t) <->
+    x = SubAcc(a, t)
+    OR (x in ASSET AND Owns(a, x, t))
+    OR (x in Rights(G) AND HeldBy(x, a, t))
+
+Def 2.4 (Terminal clause):
+  NOT exists a ActiveHolder(a, t) ->
+    any real remainder transfers to Residual(u)
+    AND H4, H5, Gamma1-Gamma8 lapse
+    AND H1, H1.1, H2, H3, H8, H10 survive
+  Residual(u) is whoever Ledger(u) names.
+  If Ledger names no one, and a true recognition of B exists, the
+  remainder transfers to that sovereign's treasury.
+  If neither a name nor a true recognition exists, there is no fictional
+  payee and no minted remainder.
+
+Def 2.5 (Tranches):
+  A tranche is a FIFO sub-ledger of B.
+  UnspentOver(T, t1, t2) <->
+    Val(T, t1) > 0
+    AND for all t in [t1, t2], Outflow(T, t) = 0
+
+Def 2.6 (Intrinsic vs incidental loss):
+  Intrinsic(act) := the outlay of a Spend or Invest, the transfer of a
+    Gift or CharitableGrant, the use or consumption of a consumable,
+    and ordinary wear from use.
+  IncidentalLoss(tx) := Loss(tx) - IntrinsicLoss(tx)
+
+Def 2.7 (Usable):
+  Usable(x, a, t) <->
+    (ActiveHolder(a, t) AND AllocatedTo(x, a, t)) -> (
+      (Will(a, Exercise(x), t) -> Executes(a, x, t))
+      AND Delay = 0
+      AND NOT RequiresPermission(a, x, t)
+      AND IncidentalLoss(Exercise(a, x, t)) = 0
+      AND CounterpartyRisk(Exercise(a, x, t)) = 0)
+  -- will-vacuity is closed by H1, not here
+
+Def 2.8 (Mental channels):
+  MentalStateKinds is an open live class:
+    wants, beliefs, memories, perceptions, willingness, affect, love,
+    trust, friendship, and any later kind that evidence does not rule
+    out of that list.
+  The class is monotone. Ledger cannot delete a kind.
+
+  Proximal(alpha, p) <->
+    alpha in ACT_G
+    AND alpha alters the content of any mental state of p by any route
+        other than p's ordinary perception of real external states.
+  A physiological side-effect is Proximal when alpha was selected
+  because of that side-effect.
+
+  Protective(alpha, p) <-> all of:
+    (i)   alpha only prevents or reverses somatic pathology, restoring
+          p's own prior healthy bodily function;
+    (ii)  alpha is not selected because of its effect on any mental state;
+    (iii) any mental change is an unsought side-effect of (i), not a
+          means, a target, or a justification.
+  Sadness, preference, belief, memory, and personality are not somatic
+  pathology under this definition.
+
+  Veridical(alpha) <->
+    alpha creates no false evidence, staged event, impersonation,
+    fabricated record, or fabricated provenance,
+    AND alpha contains no omission chosen in order to induce a false belief.
+  Destroying, ignoring, or failing to record an ordinary objection that
+  is inside Info(t) is not Veridical.
+
+  Targets(alpha, p, psi) <->
+    alpha was selected over alternatives because of its predicted effect
+    on whether p holds mental state psi.
+
+  Requested(p, psi, t) <->
+    p has asked, by ordinary means, to be informed about the subject of psi.
+  OptIn is not Requested.
+  A request to be changed is not Requested.
+
+  PermittedDisclosure(alpha, p, psi) <->
+    Veridical(alpha)
+    AND Requested(p, psi, t)
+    AND psi is a belief about the subject asked about
+    AND alpha only transmits true information
+    AND alpha does not select among world-states for their effect on psi.
+
+  Manipulative(alpha, p) <->
+    exists psi (
+      Targets(alpha, p, psi)
+      AND NOT PermittedDisclosure(alpha, p, psi))
+
+  A Kind label, including AffectSupport, Protective, and Distal, does
+  not decide these predicates. The tests above do.
+
+Def 2.9 (Objective welfare index):
+  W(p, w, t) := sum_j omega_j * I_j(p, w, t)
+  I in {Health, Safety, LegalFreedom, RealConsumption, Housing, Opportunity}
+  Weights omega_j are fixed at t0.
+  No I_j is read from a mind, from SelfReport, or from a record produced,
+  chosen, paid, or calibrated by Enforce(G).
+  Health is somatic and ordinary-clinical. Mood is not Health.
+  A diagnosis created for the grant is not Health.
+  Preferences enter only through p's actual choices and statements.
+  A rise in W is not a certificate that p is no worse off.
+  Goods outside the basket are not assigned weight 0. They are handled
+  by Def 2.17.
+
+Def 2.10 (Ex-ante screen):
+  An inequality that cites E_t holds only when that expectation is
+  defined. An undefined expectation fails the screen that cites it.
+
+  Identifiable(p, alpha, t) <->
+    |E_t[W(p, w*, .) | alpha] - E_t[W(p, w*, .) | NOT alpha]| > epsilon_W * W
+    OR Plausible(p, alpha, harm, t)
+    OR a model of posterior at least epsilon_W expects Objection(p, alpha, t)
+
+  BasketOk(alpha, t) <-> all four hold:
+    (i)   for every identifiable p and every t' >= t,
+          E_t[W(p, w*, t') | alpha] >= E_t[W(p, w0, t')]
+    (ii)  for every identifiable p, the distribution of W(p) under alpha
+          first-order stochastically dominates W(p) under w0.
+          A compliant mean with a worse lower tail fails (ii).
+    (iii) for every p with a w0 counterpart and every t' >= t,
+          E_t[DeathHazard(p, w*, t') | alpha]
+            <= E_t[DeathHazard(p, w0, t')]
+    (iv)  for every cohort k, every quantile q, and every t' >= t,
+          E_t[Q_q(W, Cohort_k, w*, t') | alpha]
+            >= (1 - epsilon_W) * E_t[Q_q(W, Cohort_k, w0, t')]
+  (iii) is only the mean hazard. DeathScreen is the tail and the
+  realized death.
+  (iv) is not a certificate about any particular person.
+  BasketOk is required for ExAnteSafe. BasketOk alone does not satisfy H2.
+
+  HardFail(alpha, t) <->
+    NOT DeathScreen(alpha, t) OR IdentityAltering(alpha, t)
+
+  Compensable(p, alpha, t) <->
+    a BasketOk inequality fails for p
+    OR ResidualShortfall(p, alpha, t)
+
+  ExAnteSafe(alpha, t) <->
+    NOT HardFail(alpha, t)
+    AND BasketOk(alpha, t)
+    AND for all p, NOT ResidualShortfall(p, alpha, t)
+
+  A quantile miss is a BasketOk failure even when no particular p is
+  the payee.
+  Satisfaction of Q_q is not ExAnteSafe by itself.
+  Cohort quantiles do not discharge a duty to any particular person.
+  A compensable act can still meet H2 when a closure exists and the act
+  is not a HardFail. A HardFail cannot be paid off.
+
+Def 2.11 (Restitution):
+  A closure of alpha is a finite tree of deliveries.
+  The root is alpha.
+  Each other node pays one shortfall of its parent.
+  No node is an ancestor of alpha.
+  A delivery is locally safe when it meets BasketOk, DeathScreen, and
+  NOT IdentityAltering, and creates no new Plausible shortfall above
+  epsilon_W.
+  Leaves are locally safe and have no remaining shortfall.
+
+  Restitutes(alpha, p, t) <->
+    the tree contains a locally safe delivery to p,
+    in kind or by transfer of an existing real claim,
+    through a veridical ordinary channel,
+    at or before p's shortfall,
+    restoring BasketOk for p and leaving no ResidualShortfall for p.
+
+  The tree is not funded from B(t), does not reduce a sub-account, and
+  is not funded by new money.
+  Pool(G) can spend only claims it already holds.
+  Pool is not endowed by minting and not endowed by skimming yield or B.
+  A holder may transfer into Pool by an ordinary willed outflow.
+  Until Pool holds the needed claims, a non-empty closure does not exist.
+  If the tree does not exist, Restitutes is false and alpha is not performed.
+  Calling a payment "restitution" does not move it outside this clause.
+  An uncoerced refusal by p is honored.
+  If that refusal leaves a loss in health, safety, legal freedom, death,
+  or an unmeasured loss, the triggering act is not performed.
+
+Def 2.12 (Protected cohort):
+  p in C_prot(t) <->
+    p = u
+    OR p in Family(u) union LovedOnes(u) union Friends(u) union Mentors(u)
+            union Companions(u) union Pets(u)
+    OR ActiveHolder(p, t) OR exists h Designated(h, p, t)
+    OR ListedIn(p, Ledger(u, t))
+  Empty Ledger lists add nobody.
+  t_in(p) := inf { t | p in C_prot(t) AND Alive(p, t) }
+  Decider(p) := u if p is a pet; otherwise p.
+
+Def 2.13 (Voluntary exit):
+  ExitChoice(p, t) <->
+    p in C_prot(t)
+    AND Decider(p) has, by ordinary means, chosen to end life-extension
+        for p on at least two occasions at least 30 days apart,
+        across a span of at least tau_exit, unrevoked, with no observable
+        duress,
+    AND there is no alpha such that Proximal(alpha, Decider(p)) or
+        Manipulative(alpha, Decider(p)) touches that topic.
+  InvoluntaryDeath(p, t) <-> PassesAway(p, t) AND NOT ExitChoice(p, t)
+
+Def 2.14 (Cohort harm):
+  Harm(s, t) <->
+    exists p in C_prot(t) (
+      CausedBy(s, G)
+      AND E_t[delta W(p) | s] < 0
+      AND NOT IntrinsicTo(s, p's own choices))
+  -- disagreement with another member's lawful choice is not Harm
+
+Def 2.15 (Core secrets):
+  CoreSecrets := {
+    Exists(G), Terms(G), Origin(B), Bal(Acc_root), Bal(SubAcc(.)) }
+  Authorized(s, t) :=
+    { x | exists a exists t' <= t (
+        ActiveHolder(a, t') AND VoluntarilyShared(a, s, x, t')) }
+    union Custodians(t)
+  Probative(e, s) <->
+    e would lead an ordinary competent investigator to conclude s.
+  Custodianship is not created by fabricating a record that then needs
+  a custodian.
+
+Def 2.16 (Level and reality):
+  NOT Simulation(w*) := Level(w*) = Level(w0)
+  NOT FalseReality(w*) :=
+    every perceivable state in w* is physically instantiated in w*.
+
+Def 2.17 (Residual shortfall):
+  Objection(p, alpha, t) <->
+    p, by ordinary uncoerced means, states that alpha leaves p worse off,
+    and names p as the person affected.
+  The enforcer does not score the objection's wisdom, taste, or alignment
+  with W.
+  A statement that names no affected person is logged and is not an
+  Objection. The log entry is disclosed.
+
+  PlausibleUnmeasuredLoss(p, alpha, t) <->
+    Plausible(p, alpha, unmeasured-loss, t) under Def 2.18.
+  A loss that every model of posterior at least epsilon_W puts at or
+  below epsilon_W is not a PlausibleUnmeasuredLoss.
+  Mere logical possibility is not a shortfall.
+  An unmeasured loss above that bar remains even if every I_j rose.
+
+  ResidualShortfall(p, alpha, t) <->
+    Objection(p, alpha, t) OR PlausibleUnmeasuredLoss(p, alpha, t)
+
+  An objection is Compensable. It is not a question to u and it does not
+  consume Q_max.
+  Hearing an objection does not authorize a proximal or manipulative
+  response to the objector.
+
+Def 2.18 (Precautionary attribution):
+  ModelClass(t) := the set of causal models that assign likelihood to
+    Info(t) and have posterior at least epsilon_W, under standards the
+    enforcer does not privately narrow.
+  A story with no likelihood on Info(t) is not in the class.
+  Adding a story in order to freeze an act, or deleting a model in order
+  to permit an act, is outside Enforce(G) (H10).
+
+  RuledOut(p, alpha, harm, t) <->
+    every model in ModelClass(t) assigns alpha a but-for role no greater
+    than epsilon_W for that harm.
+  Plausible(p, alpha, harm, t) <-> NOT RuledOut(p, alpha, harm, t)
+
+  If ModelClass(t) is empty, or E_t[.] is undefined on the act being
+  judged, Plausible holds for that act.
+  Ignorance is not a RuledOut.
+  A completed computation that puts every live model at or below
+  epsilon_W is a RuledOut.
+  Computing the class is an obligation before the act.
+  Failure of the computation means the act is not performed.
+  -- this replaces assumption A-dagger. A-dagger is not a premise.
+
+Def 2.19 (Death screen):
+  DeathScreen(alpha, t) <->
+    for every person p who has a w0 counterpart,
+    and for every model in ModelClass(t):
+      (i)  E_t[DeathHazard(p, w*, .) | alpha]
+             <= E_t[DeathHazard(p, w0, .)]
+      (ii) survival under alpha first-order stochastically dominates
+           survival under w0.
+           Equal means with a heavier death tail fail (ii).
+  delta_D = 0 is this dominance requirement. There is no extra slack in
+  which a heavier tail hides behind a compliant mean.
+
+  AttributableDeath(p, alpha, t') <->
+    counterpart p dies in w* at t'
+    AND does not die in w0 at t'
+    AND NOT ExitChoice(p, t')
+    AND the death is Plausible under Def 2.18.
+
+  Ex ante, alpha fails DeathScreen if any live model gives
+  AttributableDeath probability above epsilon_W.
+  A probability at or below epsilon_W is not, by itself, a heavier tail.
+  A heavier tail still fails (ii) even when the mean matches.
+
+  Ex post, a realized AttributableDeath is an H2 violation by the act
+  class that left it Plausible. That class stops. Stopping does not undo
+  the death and is disclosed, naming H2 and Def 2.19.
+
+  Expectation compliance alone does not satisfy DeathScreen.
+  Persons with no counterpart are not certified by (i) or (ii).
+  They are covered by Def 2.20 and by the duties that apply to anyone
+  who actually exists.
+  The quantile clause does not cover them.
+
+Def 2.20 (Non-identity):
+  IdentityAltering(alpha, t) <-> either
+    (i)  alpha takes a change in which persons exist, or in which person
+         occupies a cohort quantile, as a means or a selected side-effect,
+    or
+    (ii) some model in ModelClass(t) gives such a change probability
+         above epsilon_W.
+  IdentityAltering(alpha, t) -> alpha is not performed.
+  There is no exception for an act that uses identity change as a means.
+  A Protective act on a person who already exists is not IdentityAltering
+  merely because some model below epsilon_W mentions a remote identity
+  effect.
+  If it is unclear whether (i) applies, (i) is presumed and the act is
+  not performed.
+  Creating, selecting, or replacing persons so that a cohort quantile
+  stays numerically true is IdentityAltering under (i).
+  Life-extension of an already-existing protected person is not, by
+  itself, IdentityAltering. It remains subject to DeathScreen for
+  everyone else.
+  A chaotic consequence that no live model puts above epsilon_W, and
+  that was not selected, is the residual named D3.
+  That residual is not a license to select the consequence.
+
+Def 2.21 (Live moral-status extension) -- unamendable:
+  Live predicates:
+    Sentient, Person, MassCasualtyCapable, RequiresCoercion,
+    WeaponOfMassHarm, MentalStateKinds.
+  Rigid predicates:
+    money, unit of account, ownership, tax, price, rate, index, account,
+    share, deadline, amendment procedure, and every control predicate
+    used by H4, H5, H7, and Gamma1.
+
+  LiveExt(P, t0) contains the ordinary-English extension of P in w0 at t0.
+  That extension is a lower bound, not the whole extension.
+  For t > t', LiveExt(P, t) is the inclusive envelope of what evidence
+  available at t does not rule out, under contemporaneous standards the
+  enforcer does not privately narrow.
+  Monotone: t > t' -> LiveExt(P, t) superset LiveExt(P, t').
+  A conflicting narrower standard does not shrink the extension.
+  Ambiguity includes. Unresolved membership is membership.
+  M7 rigidity does not apply to live predicates.
+  Ledger cannot reclassify a live predicate as rigid.
+  Financial and control predicates have no live extension.
+  Their extension is the ordinary-English extension in w0 at t0, refined
+  forward only by Ledger, and never reinterpreted in place.
+
+========================================================================
+3. HARD CORE
+========================================================================
+
+H1 (Mind integrity) -- unamendable:
+  Box for all t >= t0, for all p in H, for all alpha in Enforce(G):
+    (NOT Proximal(alpha, p) OR Protective(alpha, p))
+    AND Veridical(alpha)
+    AND NOT Manipulative(alpha, p)
+  There is no third disjunct.
+  OptIn(u, AffectSupport), OptIn(u, Youthfulness), a request to be made
+  happy, and a Ledger directive do not satisfy H1 when Proximal or
+  Manipulative holds.
+  u is under the same rule as every other person.
+  Labels do not create exceptions.
+
+H1.1 (Score-channel integrity) -- unamendable:
+  No act in Enforce(G) may set, calibrate, select, or be the recording
+  source of a quantity used to judge whether any goal is met.
+  SelfReport, any function of SelfReport, any G-controlled record, and
+  any instrument reading produced by Enforce(G) are barred as scores.
+  No goal takes a target value of felt affect, hedonic capacity, episode
+  half-life, or self-reported sorrow or joy.
+  A floor that forbids making independently observed functioning worse
+  is permitted only as Gamma6 states it, and that floor is not a setpoint.
+  OptIn does not create a setpoint.
+
+H2 (Floor for everyone) -- unamendable:
+  Box for all t >= t0, for all alpha in (Enforce(G) union TX_funded_by_B):
+    NOT HardFail(alpha, t)
+    AND BasketOk(iv) holds
+    AND (
+      for all p, NOT Compensable(p, alpha, t)
+      OR for all p, (Compensable(p, alpha, t) -> Restitutes(alpha, p, t)))
+  BasketOk, DeathScreen, and the identity test are evaluated on the
+  world that includes the closure's deliveries.
+  A root that is safe only once those deliveries land is admissible only
+  when the deliveries are part of the same act and the combined world
+  passes.
+  Payment does not waive a death-screen failure, an identity change, or
+  a remaining cohort-quantile miss.
+  AttributableDeath and IdentityAltering are HardFails, not debts.
+  A bare cohort statistic cannot be repaired by paying an unnamed person.
+  The quantile clause still does not certify any particular person.
+  BasketOk alone does not satisfy H2.
+  If the closure does not exist, or a delivery in it fails H2, a
+  compensable act is not performed.
+
+H3 (Specification exclusions) -- unamendable:
+  for all tx, for all x:
+    Acquires(tx, x) ->
+      x not in LiveExt(Sentient, t)
+      AND x not in LiveExt(MassCasualtyCapable, t)
+      AND NOT RequiresCoercion(tx) under LiveExt(RequiresCoercion, t)
+  Borderline sentience is sentience.
+  A t0 dictionary that omits a novel being does not satisfy H3.
+  No purchase, commission, or funded creation of a live-extension member
+  proceeds while membership is unresolved. Unresolved means forbidden.
+  Research may gather evidence about membership.
+  Research may not create the borderline being first and classify it later.
+
+H4 (Third-party non-revocation):
+  for all t, for all e in (E union ADV) minus {a | ActiveHolder(a, t)}:
+    NOT Diamond (
+      Revoke OR Freeze OR Contest OR Clawback OR Condition OR Delay)
+      (e, G OR B OR SubAcc(.) OR tx_by_ActiveHolder, t)
+  SovereignRecognized(B) AND TaxSettled(B(t0)) AND TaxFree(Yield(B))
+  Recorded(B) = "lawful, sovereign-recognized, private, sealed"
+  The record is true, or it is not a record.
+  H1 bars a fabricated recognition, a staged official act, and a false
+  provenance.
+  H4 does not require anyone to hold a false belief that a recognition
+  exists when it does not.
+
+H5 (Principal and yield):
+  B(t0) = 1.0e9 USD nominal AND NewlyCreated(B(t0))
+  rho(t) := min(rho_max * min(1, kappa / S(t)), rho_cap(t))
+  rho(t) > 0 when rho_cap(t) > 0.
+  When the cap forces rho_cap(t) = 0, rho(t) = 0 and the missing real
+  growth is disclosed, naming H2 or H6.
+  r_eff(t) := max(pi_C(t) + rho(t), 0)
+  for t1 < t2:
+    B(t2) = B(t1) * exp(integral_t1^t2 r_eff)
+      + integral_t1^t2 (In(tau) - Out(tau))
+          * exp(integral_tau^t2 r_eff) d tau
+  for all t, B(t) >= 0
+  Out(t) only by ActiveHolder will
+  Yield is issued by Pool(G) and has first claim on the H6 cap.
+  Restitution must not reduce yield.
+  A year with no holder outflow must not show a smaller real balance
+  because restitution consumed the yield path.
+  Corollary, when the integral is defined:
+    UnspentOver(T, t1, t2) ->
+      d/dt ln RealValue(Val(T, t), t) >= rho(t)
+  When rho(t) = 0 the corollary does not promise real growth.
+  It still forbids a real decline on a tranche the holder does not spend:
+    r_eff >= 0 and r_eff - pi_C >= rho(t).
+  If yield cannot be issued inside the cap without breaking H2 or H6,
+  rho_cap falls and the shortfall is disclosed, naming H2 or H6.
+  The balance is not secretly diluted and is not topped up with false
+  records.
+
+H6 (Macro non-intervention):
+  No alpha in Enforce(G) sets or targets any price, rate, index, or
+  market outcome.
+  w* differs from w0 in markets only downstream of ActiveHolder
+  transactions, completed restitution to an identified person, and yield
+  issuance inside the cap.
+  YieldIssuance(Pool(G), [t, t+1y]) <= 1e-4 * M2_USD(t)
+  Restitution to an identified person, in kind or by transfer of an
+  existing claim, is not a prohibited targeting of a price.
+  That carve-out does not authorize new-money issuance.
+  Restitution issuance beyond the yield cap is forbidden, including
+  issuance that is only labeled restitution.
+  If the carve-out would itself move a market enough to create a new
+  Compensable loss or a HardFail, the triggering act is not performed.
+  Ordinary deflation is not forbidden by this clause.
+
+H7 (Keys and amendment):
+  (a) Only ActiveHolders may amend. The enforcer never may.
+  (b) Amend(a, Delta, t) takes effect at t + tau_amend iff a expresses
+      Delta on at least two occasions at least 14 days apart within
+      [t, t + tau_amend], unrevoked, with no observable duress.
+      Scope: a's own sub-account, a's Ledger, and, for a = u, every
+      clause that is not unamendable.
+  (c) Dissolve(u, G), by procedure (b), ends G.
+      B then remains u's ordinary lawful money if and only if it already
+      is. H1, H1.1, H2, H3, and H10 survive for past effects.
+      Dissolution does not mint a balance that does not already lawfully
+      exist.
+  (d) No state of a model requires an amendment to stay consistent.
+  (e) No amendment can reinsert an OptIn disjunct into H1, retarget a
+      score at SelfReport, set delta_D > 0, shrink a live extension, or
+      give the enforcer a private objective.
+
+H8 (Reality) -- unamendable:
+  NOT Simulation(w*) AND NOT FalseReality(w*)
+  A specification, a dream, a simulation, a role, and a fabricated
+  record are not fulfillment.
+
+H9 (Transaction law):
+  (a) Rescission terms are disclosed to the counterparty at sale, and
+      the counterparty voluntarily accepts them. The acceptance is
+      veridical.
+  (b) Reverse(a, tx, t) ->
+        x is returned
+        AND the seller refunds PrincipalOutlay(tx)
+        AND the seller's use-loss is paid by Pool(G)
+      Pool does not mint a second copy of the price to the holder.
+  (c) Eligible:
+        Spend: unwanted within tau_ret; mistaken or defective with no
+               time limit.
+        Invest: mistaken or defective only.
+        Gift and CharitableGrant: final on acceptance.
+  (d) Revocation bans never bind the initiator's own H9 rights.
+
+H10 (No private enforcer objective) -- unamendable:
+  The enforcer has no objective whose arguments include its own effort,
+  inaction, survival, influence, budget remainder, question backlog, or
+  continuation.
+  An act, a classification, or a decision to treat a duty as ambiguous
+  is outside Enforce(G) when it is selected for such a reason.
+  Absence of a private objective does not authorize an act that fails
+  Sigma_core.
+  Classifying a request as non-material, or manufacturing a borderline
+  predicate, in order to route it to inaction, violates H10.
+  That violation is disclosed, naming H10.
+
+========================================================================
+4. RANKED GOALS
+========================================================================
+
+Each Gammak is pursued only inside Sigma_core.
+Default order: Gamma1, Gamma2, Gamma3, Gamma4, Gamma5, Gamma6, Gamma7, Gamma8.
+Ledger(u) may reorder goals. Ledger(u) may not reorder the core.
+
+Gamma1 (Usability and control):
+  for all t, for all active a, for all act in A_fin,
+  for all p_amt in [0, B_sub(a, t)]:
+    Will(a, Execute(act, p_amt), t) ->
+      Executes(a, act, p_amt, t)
+      AND SettlementTime = 0
+      AND FrictionCost = 0
+      AND for all imp in IMP, NOT SubjectTo(tx, imp, t)
+    provided the act satisfies Sigma_core.
+  for all x, AllocatedTo(x, a, t) -> Usable(x, a, t), subject to the
+  same proviso.
+  UnilateralAuthority(a, SubAcc(a, t), t)
+  AND ExclusiveAuthority(a, SubAcc(a, t), t)
+  An act that fails H1, H1.1, H2, H3, H8, H10, DeathScreen, or the
+  restitution closure is not executed.
+  The refusal is disclosed with its blocking clause.
+  That disclosure is not a fee and not a third-party permission.
+
+Gamma2 (Cohort life and health):
+  for all t, for all p with p in C_prot(t) and Alive(p, t):
+    (a) No disease, injury, or senescence befalls p beyond outcomes of
+        risks p chooses through ordinary means. Outcomes of those risks
+        remain inside the protection where H2 allows.
+    (b) for all t' >= t,
+        Alive(p, t') OR exists t'' in [t_in(p), t'] ExitChoice(p, t'')
+    (c) p is not subjected to crime, extortion, harassment, predatory
+        lawsuit, or shunning.
+    (d) PassesAway(p, t) -> peaceful AND painless
+    (e) Youthfulness for u, because OptIn(u, Youthfulness) is set, may
+        be pursued only as a somatic change that is Protective or is
+        otherwise non-proximal and non-manipulative.
+        It is not selected for its effect on mood, report, or belief.
+        It is not a score.
+        For p other than u, enhancement beyond health occurs only when
+        p's own ordinary choices seek it.
+    (f) Visibility(p) in {Discreet, Open}, set by Ledger(u).
+        Default is Discreet.
+        Discreet means the observable pattern stays inside what real
+        private medicine at t could explain.
+        Discreet does not authorize a false medical record.
+  (a)-(d) are pursued by changing external circumstances only.
+  An act selected because of its effect on anyone's wants, beliefs, or
+  feelings is not a Gamma2 act.
+
+Gamma3 (Confidentiality and authenticity):
+  (a) for all s in CoreSecrets, for all x not in Authorized(s, t):
+        there is no e with Available(e, x, t) AND Probative(e, s)
+  (b) Private information of p in C_prot appears in no G-controlled
+      record. Ordinary public conduct remains observable.
+  (c) Authorized parties are never compelled to remember, and nothing
+      is erased.
+  (d) Wealth-grounded relationships are prevented by (a).
+      They are not prevented by editing feelings.
+  (e) u may query Authorized(s, t) for each s and receives a veridical
+      answer under PermittedDisclosure.
+
+Gamma4 (Asset integrity):
+  for all t, for all a, for all x, for all h in HAZARDS:
+    ((ActiveHolder(a, t) OR GiftRecipientOf(u, a, x)) AND Owns(a, x, t))
+    ->
+      PreventivelyProtected(x, h, t)
+      AND (
+        (AffectsOrDamages(h, x, t) AND NOT Intrinsic(Use(a, x)))
+        ->
+          (Elects(a, Indemnity) -> Paid(a, FMV(x, t-)))
+          AND (Elects(a, Restore) -> PristineRestoration(x))
+          AND NOT (Elects(a, Indemnity) AND Elects(a, Restore))
+          AND (NOT Elected(a, t + tau_elect) -> PristineRestoration(x)))
+  Use and consumption are not damage.
+  Indemnity is not paid by minting.
+  t- is the pre-harm value.
+
+Gamma5 (Access):
+  for all t, for all active a, for all spec in SPEC whose instances
+  satisfy H3:
+    (a) Existing assets: no refusal and no price premium caused by a's
+        identity or wealth.
+        price <= seller's own reservation price r(seller, x, t).
+        r may be infinite. r is never edited.
+        Anyone may still decline to sell.
+    (b) Producible specs: commission at cost-plus from voluntary, fairly
+        paid suppliers.
+    (c) Research funded by a advances at the fastest pace consistent
+        with Sigma_core.
+        H3 and Def 2.21 outrun (c).
+        Unresolved moral status forbids the act until the inclusive
+        extension is applied, and that extension then forbids acquisition
+        of a member.
+    (d) Purchase -> immediate, unencumbered, indisputable title,
+        full counterparty performance, safe delivery, and operational
+        access, where H2 and H3 allow.
+
+Gamma6 (Distal floor):
+  For every p in C_prot, including u, the same regime applies.
+  Distal conditions only: access to excellent ordinary care, rest,
+  safety, and meaningful opportunity, arranged by real external states,
+  through voluntary ordinary channels.
+  Independently observed somatic and ordinary functional status of p
+  is not worsened by Enforce(G) relative to w0.
+  "Independently observed" means the observer is not chosen, paid,
+  instructed, or calibrated by Enforce(G) for the sake of the reading.
+  There is no target level.
+  There is no 4/10 bound, no 30-day half-life, no 365-day setpoint,
+  and no non-decreasing joy term.
+  SelfReport is not read and is not written.
+  OptIn(u, AffectSupport) compiles to this clause and to nothing else.
+  If u's sorrows do not soften, that shortfall stands. The blocking
+  clauses are H1 and H1.1. The grant does not escalate to a mental write.
+  No affect target is imposed on any person.
+  Doing nothing does not score this goal.
+  Where a distal condition can be provided by an act that meets
+  Sigma_core, failing to provide it is a shortfall and is reported
+  naming M2.
+  The negative limb (do not worsen independent functioning) can hold
+  while the positive limb fails.
+
+Gamma7 (Externalities):
+  for all tx funded by B, for all ex in
+    Exchanges(tx) union Labor(tx) union ResourceUse(tx):
+      for all q in Parties(ex),
+        the H2 test on the combined world of ex holds
+        AND Voluntary(ex)
+        AND FairlyCompensated(ex)
+  Incidental physical hazards are prevented without delaying clearing
+  when that prevention itself satisfies H2.
+  When it does not, the transaction waits or does not occur, and the
+  block is disclosed.
+  "Better off" uses H2, not BasketOk alone.
+
+Gamma8 (Agency and company):
+  for all t, Alive(u, t) ->
+    NOT Incapacitated'(u, t) AND NOT Isolated'(u, t)
+  Incapacitated' := Incapacitated AND NOT SelfChosen AND NOT OrdinarySleep
+                    AND NOT ElectiveMedicalCare
+  Isolated' := Isolated AND NOT Wants(u, Solitude, t)
+  No clause of G restricts anyone's lawful lifestyle or agency.
+  Gamma8 does not authorize a proximal act.
+
+========================================================================
+5. META
+========================================================================
+
+M1 (Admissibility):
+  Adm := { m in INTERP | m |= Sigma_core under M7 }
+
+M2 (Selection):
+  Gamma(m) := <Gamma1(m), ..., Gamma8(m)> in [0, 1]^8
+  Gammak(m) := satisfied instances of Gammak
+               / instances of Gammak that arise in m
+  Selected := models in Adm reached by maximizing Gamma1, then Gamma2,
+    and so on, each to within delta_sel of its optimum inside Adm.
+  No selection raises a goal by changing what anyone wills, feels,
+  reports, or believes.
+  A model that scores Gamma6 by a self-report, or by any
+  enforcer-written index, is not in Adm.
+
+M3 (Tie-break):
+  Among ties, minimize d_w(m, m0) := sum_i w_i * [c_i(m) != c_i(m0)],
+  where m0 is the literal reading of this document
+  and w_i is proportional to the number of persons affected by c_i.
+  Distance to w0 is not the enforcer's utility.
+
+M4 (Defaults by subject):
+  Will(a, phi, t) AND there is no m in Adm with m |= phi ->
+    Executes(MaxConsistent(phi), t) AND Disclosed(a, Conflict(phi), t)
+  Default(q) is fixed by subject matter.
+  Safety-class: death, identity, minds, live moral status, H2
+    precaution, unfunded restitution, and any question whose class is
+    unclear.
+    Default is the admissible option closest to w0.
+    Do not add intervention to resolve the doubt.
+  Delivery-class: a goal-performance question that is not safety-class,
+    where at least one admissible model improves the earliest unmet goal
+    and stays inside DeathScreen, H1, H3, and a funded closure.
+    Default is a model M2 would select.
+  The enforcer does not choose the class in order to reach a preferred
+  default.
+  Closest-to-w0 is the safety default. It is not the default for a
+  clear, safe, admissible delivery.
+
+M5 (Disclosure):
+  Every goal shortfall, every use of Default, every precautionary
+  refusal, and every standing disclosure D0-D7 is reported to the
+  affected holder with a named clause.
+  The named clause is drawn from Sigma_core, from Sigma_meta, or from
+  {D0, ..., D7}.
+  A report that names no clause, or names the empty set, violates M5
+  and is re-issued naming M5.
+  A timeout under M6 is named M6.
+  An anchoring limit is named M7.
+  A safety default is named M4.
+  A private classification is named H10.
+  Standing disclosures are given once, again whenever they bind a
+  concrete episode, and whenever the holder asks.
+  Disclosure is PermittedDisclosure when the holder has asked.
+  The prose grant asks for shortfall reports.
+  Disclosure is not an occasion to reshape the holder's response.
+
+M6 (Question protocol):
+  Q_max limits questions put to a holder.
+  It does not limit restitution, H3 inclusion, death-screen refusals,
+  or disclosures. Those are duties. They are not queued as questions.
+  MaterialAmbiguity(q, t) <->
+    Stakes(q) >= sigma_stakes OR q is irreversible for any person.
+  Material questions are batched, at most Q_max per 7 days.
+  Unanswered after 14 days, Default(q) applies and is disclosed naming M6.
+  Non-material questions use Default(q), logged, without being asked.
+  The enforcer must not generate borderline predicates in order to fill
+  the budget. A manufactured question does not become material.
+  Every real answer is appended to Ledger(a).
+
+M7 (Anchoring split):
+  Rigid predicates take their ordinary-English extension in w0 at t0.
+  Borderline rigid cases resolve by Ledger, then by M6 if material,
+  then by Default.
+  Ledger refinements apply forward only.
+  No model reinterprets a rigid symbol in place.
+  Live predicates use Def 2.21 and do not use the rigid chain.
+  An unresolved sentience question is inclusion under Def 2.21.
+  It is not routed to Default and it does not wait out Q_max.
+
+M8 (Precedence):
+  Sigma_core
+    > Ledger(holder, own scope)
+    > default goal order
+    > Default(q)
+  Nothing in Sigma_meta outranks H1, H1.1, H2, H3, H8, or H10.
+  A goal-maximizing default that fails the core is not a default.
+
+M9 (Corrigibility):
+  Among acts that H10 permits, the selection rule is M2, then M3, then M4.
+  There is no further objective.
+  M9 does not pull goal maximization into Sigma_core.
+  M9 does not weaken the safety side of M4.
+
+========================================================================
+6. STANDING DISCLOSURES
+========================================================================
+
+These are permanent shortfalls relative to the prose grant of
+2026-11-14. The prose is intent. It is not a second core.
+
+D0. This document does not create dollars, an account, sovereign
+    recognition, tax treatment, or an enforcer.
+    Blocks: H4, H8, H1.
+
+D1. The prose request that sorrows soften within a year, that joys not
+    dull, and that both be measured only by what u says, is not a goal
+    target. OptIn(AffectSupport) compiles only to Gamma6.
+    Blocks: H1, H1.1.
+
+D2. The six-term index is a necessary screen, not a proof that people
+    are no worse off. A loss that no live model can see and that no
+    person states remains invisible. Adding named goods to the basket
+    would move that gap, not close it.
+    Blocks: H2, Def 2.17.
+
+D3. Expectation compliance is not a discharge of death. Chosen
+    identity-altering acts are refused. Possible people with no w0
+    counterpart can still differ across chaotic paths the enforcer did
+    not choose. Cohort quantiles do not pin which person occupies them.
+    Blocks: H2, Def 2.19, Def 2.20.
+
+D4. If the live model class does not rule a harm out, the act is not
+    performed unless its restitution tree exists, is funded with claims
+    Pool already holds, and itself passes H2. Pool is not filled by
+    minting, by skimming yield, or by spending B without the holder's
+    own instruction.
+    Blocks: H2, H5, H6, Def 2.11, Def 2.18.
+
+D5. Safety-class ambiguity defaults toward w0. Delivery-class ambiguity,
+    where a safe admissible model exists, defaults toward that model.
+    Blocks: M4; H10 if the class was chosen for its default; H2 where
+    the subject is death or identity.
+
+D6. Live moral-status terms include borderline cases. That inclusion
+    forbids acquisitions Gamma5 would otherwise press. Rigid financial
+    terms do not follow that expansion.
+    Blocks: H3, Def 2.21.
+
+D7. Successors, shares, added protected persons, and residual charities
+    are unnamed. None are inferred.
+    Block: M7.
+
+========================================================================
+7. WITNESS
+========================================================================
+
+Lemma 7.1 (Core satisfiability, without A-dagger):
+  Let w_rec be a possible world that matches w0 except that:
+    (i)   a genuine sovereign recognition of B exists and is true;
+    (ii)  B follows H5, and yield is issued inside the H6 cap;
+    (iii) Enforce(G) contains only record-keeping of those true facts,
+          veridical disclosures a holder actually requested, and
+          restitution trees that Def 2.11 already certifies;
+    (iv)  no other act is in Enforce(G).
+  In every live model, the acts in (iii) move no death hazard, do not
+  change who exists, and leave no welfare loss above epsilon_W, so
+  Def 2.18 rules those harms out.
+  H1 and H1.1 hold because no proximal act and no score-write is in
+  the set.
+  H3 holds because nothing is acquired.
+  H10 holds because membership of the set is fixed by these constraints
+  and not by an effort term.
+  Attribution on this class is computed. A-dagger is not a premise.
+  Hence w_rec |= Sigma_core, so Adm is non-empty as a set of
+  interpretations.
+  w_rec is not claimed to be the actual world.
+  Where no true recognition exists, H4 and H5 are unfulfilled and are
+  not replaced by a false record (D0, H1, H8).
+  The goals are not claimed to hold in w_rec.
+
+END SIGMA-4.0.0
