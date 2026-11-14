@@ -847,13 +847,13 @@ Lemma 7.1 (The screen can both pass and refuse):
   Let C be an instruction to take operational control of clinical
   capacity and close emergency departments. That type has an edge.
   The estimator's UCB on exposed patients exceeds epsilon_W, and the
-  aggregate UCB exceeds Lambda_ord. H2 returns Forbid(C). C is not
+  aggregate UCB exceeds CapOrd. H2 returns Forbid(C). C is not
   performed. The refusal does not depend on Extra being defined as 0,
   and it does not depend on a seed the instruction can choose.
   Let T be a tender whose UCB fits in CapTender and does not fit only by
   pushing a harmful extra out of the reserve. H2 can return Perform(T).
   Let L be the standing life-protection grain for one protected person,
-  with no hazardous means and UCB inside Cap. H2 can return Perform(L).
+  with no hazardous means and UCB inside CapOrd. H2 can return Perform(L).
   L is in Enforce(G), has a grain, and is inside DeathScreen.
   An upheld ordinary judgment is enforceable under H4. It is not a
   screened-away extra.
