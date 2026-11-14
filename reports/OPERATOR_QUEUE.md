@@ -16,6 +16,14 @@ Ambiguity about death, identity, minds, moral status, or unfunded harm defaults 
 
 The restitution reserve is not minted, not skimmed from yield, and not taken from the balance unless a holder actually transfers into it. Acts that need an unfunded reserve are not performed.
 
+## Decisions in spec/SIGMA-6.0.1.txt
+
+The five name-binding defects in 6.0.0 were fixed without changing the safety model. Two thresholds had to be given numbers because they were missing:
+
+- eta_max_W = 0.25, the same width used for aggregate deaths, because the ordinary welfare cap is 1.
+- eta_max_directed = 0.001, the same width as the individual death-hazard line, because that test compares an upper bound with 0.001.
+- rho_cap(t) is ln(1 + issuance cap / balance), so a year of yield on today's balance equals the existing issuance cap.
+
 ## Decisions in spec/SIGMA-6.0.0.txt
 
 SA-2026-Σ3 asked for the ordinary footprint to be scored against the world without the act, and for the holder not to be able to steer the law, the standards, or the seed. The numbers below are the choice.
