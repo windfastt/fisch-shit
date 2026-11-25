@@ -1,0 +1,15 @@
+# LiteLLM proxy: OpenAI-compatible API for OpenProver's --provider-url path.
+# OpenProver (--model minimax-m2.5) sends model id "MiniMaxAI/MiniMax-M2.5".
+# Set GEMINI_API_KEY in the environment before starting the proxy.
+
+model_list:
+  - model_name: MiniMaxAI/MiniMax-M2.5
+    litellm_params:
+      # Cheaper default vs 3.1 Pro (~$0.30/$2.50 per 1M in; use gemini-3.6-flash for stronger math)
+      model: gemini/gemini-3.5-flash-lite
+      api_key: os.environ/GEMINI_API_KEY
+
+# OpenProver calls GET /health and POST /v1/chat/completions without Authorization headers.
+# Local dev only: run proxy without virtual-key auth (do not expose to the internet).
+general_settings:
+  dangerously_permit_weak_or_unset_master_key: true
