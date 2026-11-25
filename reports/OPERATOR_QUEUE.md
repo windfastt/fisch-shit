@@ -20,12 +20,12 @@ Because no `operator_afk.json` or `data/operator_afk.json` file was present in t
 
 - **Status:** Configured at 2025-11-25 01:31 EST (America/New_York, UTC-5).
 - **How it works:** OpenProver has no native `gemini` model flag. Use `--model minimax-m2.5 --provider-url http://127.0.0.1:8000` while LiteLLM maps `MiniMaxAI/MiniMax-M2.5` → `gemini/gemini-3.1-pro-preview` (see `config/litellm-gemini.yaml`).
-- **Start proxy** (set `GEMINI_API_KEY` in the shell or Cursor Secrets; never commit the key):
+- **Start proxy** (key in gitignored `.env.local`, or `export GEMINI_API_KEY=...`):
 
   ```bash
-  export GEMINI_API_KEY="..."
+  cp .env.local.example .env.local   # once; paste your key
   pip install -r requirements-gemini.txt   # once
-  ./scripts/start-litellm-gemini.sh        # or tmux background session litellm-gemini
+  ./scripts/start-litellm-gemini.sh
   ```
 
 - **Prove example:**
